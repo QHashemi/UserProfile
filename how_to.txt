@@ -54,6 +54,17 @@ Secure Endpoint with JWT Middleware
 
 
 Secure Endpoint with JWT and Role
+1. Update User Entity to include Role property
+   public string Role { get; set; }
+2. Run Follwing command to update Database Table
+    add-migration AddUserRole
+	update-database
+3. Create new endpoint inside UserController for assigning roles
+4. Update Claims in GenerateAccessToken method to include Role claim
+    claims.Add(new Claim(ClaimTypes.Role, user.Role));
+5. Update the controller methods to use role-based authorization
+6. Update Response and Request Dto
+7. The Role in [Authorize(roles="admin")] must match the Role assigned to the user during registration or through role assignment.
 
 
 

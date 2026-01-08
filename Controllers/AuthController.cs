@@ -35,9 +35,7 @@ namespace UserProfile.Controllers
 
             return Ok(new RegisterResponseDto
             {
-                firstname = request.firstname,
-                lastname = request.lastname,
-                email = request.email
+                User = user,
             });
         }
 
@@ -58,11 +56,10 @@ namespace UserProfile.Controllers
             // return the response
             return Ok(new LoginResponseDto {
                 AccessToken = token,
-                firsname = user.firstname,
-                lastname = user.lastname,
-                email = request.email
+                User = user
             });
         }
+
 
         // ENDPOINT WITH ONLY JWT =======================================================================>
         [Authorize]
@@ -70,6 +67,13 @@ namespace UserProfile.Controllers
         public ActionResult<string> Test()
         {
             return Ok("The API is working!");
+        }
+        
+        [Authorize(Roles="admin")]
+        [HttpGet("test-role")]
+        public ActionResult<string> TestRole()
+        {
+            return Ok("ROLE IS OK!");
         }
 
 
@@ -83,7 +87,8 @@ namespace UserProfile.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, $"{user.firstname} {user.lastname}"),
-                new Claim(ClaimTypes.Email, user.email)
+                new Claim(ClaimTypes.Email, user.email),
+                new Claim(ClaimTypes.Role, user.role)
             };
 
             // create Key

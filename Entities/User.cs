@@ -7,6 +7,7 @@
         public string lastname { get; set; } = string.Empty;
         public string email { get; set; } = string.Empty;
         public string password { get; set; }
+        public string role { get; set; } = string.Empty;
 
     }
 }

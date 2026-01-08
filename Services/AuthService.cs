@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UserProfile.Data;
 using UserProfile.Dto.Request;
@@ -15,13 +16,13 @@ namespace UserProfile.Services
             var existingUser = await context.Users.AnyAsync(user => user.email == request.email);
             if (existingUser)
             {
-                throw new Exception("User already exists");
+                return null;
             }
 
             // Check if the user password and confirm password match
             if (request.password != request.confirmPassword)
             {
-                throw new Exception("Password are not macht");
+                return null;
             }
 
             // if not exits create new User
@@ -36,6 +37,17 @@ namespace UserProfile.Services
             user.email = request.email;
             user.password = hashPassword;
 
+            // check if the table is empty
+            var isUserTableEmpty = await context.Users.AnyAsync();
+            if (!isUserTableEmpty) // No users yet
+            {
+                user.role = "admin";
+            }
+            else
+            {
+                user.role = "user";
+            }
+
 
             // set use to db
             await context.Users.AddAsync(user);
@@ -45,6 +57,7 @@ namespace UserProfile.Services
             // return user
             return user;
         }
+
 
 
         public async Task<User> LoginAsync(LoginRequestDto request)
