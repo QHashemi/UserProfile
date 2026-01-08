@@ -18,6 +18,14 @@ namespace UserProfile.Services
                 throw new Exception("User already exists");
             }
 
+            // Check if the user password and confirm password match
+            if (request.password != request.confirmPassword)
+            {
+                throw new Exception("Password are not macht");
+            }
+
+
+
             // if not exits create new User
             var user = new User();
 
@@ -38,6 +46,29 @@ namespace UserProfile.Services
 
             // return user
             return user;
+        }
+
+
+        public async Task<User> LoginAsync(LoginRequestDto request)
+        {
+            // Check if the user exists
+            var user = await context.Users.FirstOrDefaultAsync(u => u.email == request.email);
+            if (user is null)
+            {
+                throw new Exception("User does not exist");
+            }
+
+            // verify password
+            var passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.password, request.password) 
+            if(passwordVerificationResult == PasswordVerificationResult.Failed)
+            {
+                throw new Exception("Invalid password");
+            }
+
+            // return user
+            return user;
+
+
         }
     }
 }

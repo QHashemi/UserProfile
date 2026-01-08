@@ -20,7 +20,7 @@ namespace UserProfile.Controllers
             var user = await authService.RegisterAsync(request);
 
             // check if the user has been registered successfully
-            if (user == null)
+            if (user is null)
             {
                 return BadRequest("User registration failed.");
             }
@@ -30,6 +30,26 @@ namespace UserProfile.Controllers
             {
                 firstname = request.firstname,
                 lastname = request.lastname,
+                email = request.email
+            });
+        }
+
+       // Login
+
+        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request) 
+        {
+
+            // login user in service
+            var user = await authService.LoginAsync(request);
+            if (user is null)
+            {
+                return BadRequest("Invalid email or password.");
+            }
+
+            // return the response
+            return Ok(new LoginResponseDto {
+                firsname = user.firstname,
+                lastname = user.lastname,
                 email = request.email
             });
         }

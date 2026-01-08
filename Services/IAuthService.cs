@@ -7,5 +7,7 @@ namespace UserProfile.Services
     {
         // Register Interface
         Task<User?> RegisterAsync(RegisterRequestDto request);
+
+        Task<User?> LoginAsync(LoginRequestDto request);
     }
 }
