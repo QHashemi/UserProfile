@@ -27,3 +27,31 @@ Setup Helth Checks:
 6. add /
 7. add /ready
 8. add /live
+
+
+Setup Scalar:
+1. Install package name scalar.AspNetCore
+2. Add Scalar in Program.cs
+if (app.Environment.IsDevelopment())
+	{
+		app.MapScalarApiReference();
+	}
+
+
+Implement JWT to secure Enpoint:
+1. Install package name System.IdentityModel.Tokens.Jwt
+2. Add JWT settings in appsettings.json
+3. Create GenerateTokenFunction in AuthService.cs
+4. Add AccessToken propertie inside LoginResponseDto
+   public string AccessToken { get; set; }
+5. Send Response with user information and token.
+
+
+
+
+ 
+
+
+
+
+

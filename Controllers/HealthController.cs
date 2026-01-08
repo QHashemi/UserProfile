@@ -10,7 +10,7 @@ namespace UserProfile.Controllers
     }
 
     [ApiController]
-    [Route("")]
+    [Route("/api")]
     public class HealthController(AppDbContext context) : ControllerBase
     {
         /// <summary>

@@ -24,8 +24,6 @@ namespace UserProfile.Services
                 throw new Exception("Password are not macht");
             }
 
-
-
             // if not exits create new User
             var user = new User();
 
@@ -59,7 +57,7 @@ namespace UserProfile.Services
             }
 
             // verify password
-            var passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.password, request.password) 
+            var passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.password, request.password);
             if(passwordVerificationResult == PasswordVerificationResult.Failed)
             {
                 throw new Exception("Invalid password");
@@ -67,8 +65,6 @@ namespace UserProfile.Services
 
             // return user
             return user;
-
-
         }
     }
 }
