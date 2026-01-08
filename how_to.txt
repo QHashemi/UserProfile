@@ -47,6 +47,14 @@ Implement JWT to secure Enpoint:
 5. Send Response with user information and token.
 
 
+Secure Endpoint with JWT Middleware
+1. Install package name Microsoft.AspNetCore.Authentication.JwtBearer
+2. Add builder.Services.AddAuthentication configuration in Program.cs
+3. Set [Authrize] options for every end point you wanna secure
+
+
+Secure Endpoint with JWT and Role
+
 
 
  

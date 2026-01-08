@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
@@ -63,8 +64,17 @@ namespace UserProfile.Controllers
             });
         }
 
+        // ENDPOINT WITH ONLY JWT =======================================================================>
+        [Authorize]
+        [HttpGet("test")]
+        public ActionResult<string> Test()
+        {
+            return Ok("The API is working!");
+        }
 
-       // Generate JWT Access Token
+
+
+        // Generate JWT Access Token
         private string GenerateJwtAccessToken(User user)
         {
 
@@ -77,23 +87,23 @@ namespace UserProfile.Controllers
             };
 
             // create Key
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(GetAppSettings("token")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetAppSettings("Token")));
 
             // create credentials
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
 
             // create token
-            var token = new JwtSecurityToken(
-                    issuer: GetAppSettings("issuer"),
-                    audience: GetAppSettings("audience"),
-                    claims: claims,
-                    expires: DateTime.Now.AddHours(1),
-                    signingCredentials: credentials
-                );
+            var tokenDescriptor = new JwtSecurityToken(
+               issuer: GetAppSettings("Issuer"),
+               audience: GetAppSettings("Audience"),
+               claims: claims,
+               expires: DateTime.UtcNow.AddDays(1),
+               signingCredentials: credentials
+            );
 
             // return token
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
 
         private string GetAppSettings(string setting)
