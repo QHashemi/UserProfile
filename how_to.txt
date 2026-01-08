@@ -1,0 +1,11 @@
+Setup database using Entity Framework Core:
+1. Create folder name Entities and add User.cs entity
+2. Create folder name Data and add DbContext.cs
+3. Create Db in sql server management studio
+4. Connect db with visual studio and copy the connection string
+5. Add connection string in appsettings.json
+6. Add DbContext in Program.cs
+7. Run the migration commands in Package Manager Console
+   - Add-Migration InitialCreate
+   - Update-Database
+
