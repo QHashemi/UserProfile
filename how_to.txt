@@ -17,3 +17,13 @@ Create AuthController:
 4. Create folder name Services and add AuthService.cs
 5. Create folder name Interfaces and add IAuthService.cs
 6. User AuthServices in AuthController.cs
+
+
+Setup Helth Checks:
+1. Create new Controller name HealthController.cs
+2. Add /health
+3. add /api
+4. add /db
+6. add /
+7. add /ready
+8. add /live
