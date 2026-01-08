@@ -9,3 +9,11 @@ Setup database using Entity Framework Core:
    - Add-Migration InitialCreate
    - Update-Database
 
+
+Create AuthController:
+1. Create folder name Controllers and add AuthController.cs
+2. Add Register and Login methods in AuthController.cs
+3. Create folder name DTOs and add UserRegisterDto.cs and UserLoginDto.cs
+4. Create folder name Services and add AuthService.cs
+5. Create folder name Interfaces and add IAuthService.cs
+6. User AuthServices in AuthController.cs
