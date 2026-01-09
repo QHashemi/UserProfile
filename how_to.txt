@@ -67,6 +67,18 @@ Secure Endpoint with JWT and Role
 7. The Role in [Authorize(roles="admin")] must match the Role assigned to the user during registration or through role assignment.
 
 
+Implement Refresh Token
+1. Update Entitiy with Refresh Token and Refresh Token Expire Time, so that we can save the refresh token inside database
+2. Run following command to update entity: 
+	Add-Migration AddRefreshToken
+	Update-Database
+3. Create three function to process refresh token as following:
+	GenerateRefreshToken => Generate 64Bit Refresh Token
+	GenerateAndSaveRefreshTokenAsync => Generate 64Bit and Save the refresh token in DB
+	ValidateRefreshTokenAsync => Validate Refresh Token with UserId and return new AcceseToken and RefreshToken
+4. Create Service Name RefreshTokenAsync to combine all the function and Return as service to RefreshToken Controller
+5. Create EndPoint inside controller name RefreshToken  and Send back the new AccessToken and RefreshToken to the Client.
+
 
  
 

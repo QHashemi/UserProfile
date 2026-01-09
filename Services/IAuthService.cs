@@ -1,4 +1,5 @@
 ﻿using UserProfile.Dto.Request;
+using UserProfile.Dto.Response;
 using UserProfile.Entities;
 
 namespace UserProfile.Services
@@ -8,6 +9,8 @@ namespace UserProfile.Services
         // Register Interface
         Task<User?> RegisterAsync(RegisterRequestDto request);
 
-        Task<User?> LoginAsync(LoginRequestDto request);
+        Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
+
+        Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
     }
 }

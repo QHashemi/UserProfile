@@ -4,9 +4,9 @@ namespace UserProfile.Dto.Request
 {
     public class LoginRequestDto
     {
-        public required string email { get; set; }
-        public required string password { get; set; }
-        public required string role { get; set; }
+        public required string Email { get; set; }
+        public required string Password { get; set; }
+        public required string Role { get; set; }
 
     }
 }
