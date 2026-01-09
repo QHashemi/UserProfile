@@ -36,6 +36,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
+// Error Handling Middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{

@@ -19,13 +19,7 @@ namespace UserProfile.Controllers
             // register user in service
             var user = await authService.RegisterAsync(request);
 
-            // check if the user has been registered successfully
-            if (user is null)
-            {
-                return BadRequest("User registration failed.");
-            }
             // return the response
-
             return Ok(new RegisterResponseDto
             {
                 User = user,
@@ -39,10 +33,6 @@ namespace UserProfile.Controllers
 
             // login user in service
             var serviceResult = await authService.LoginAsync(request);
-            if (serviceResult is null)
-            {
-                return BadRequest("Invalid email or password.");
-            }
 
             // return the response
             return Ok(serviceResult);
@@ -53,10 +43,7 @@ namespace UserProfile.Controllers
         public async Task<ActionResult<LoginResponseDto>> RefreshToken(RefreshTokenRequestDto request)
         {
             var serviceResponse = await authService.RefreshTokenAsync(request);
-            if (serviceResponse is null || serviceResponse.AccessToken is null || serviceResponse.RefreshToken is null)
-            {
-                return Unauthorized("Invalid Refresh Token.");
-            }
+          
             return Ok(serviceResponse);
         }
 

@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -23,13 +22,14 @@ namespace UserProfile.Services
             var existingUser = await context.Users.AnyAsync(user => user.Email == request.Email);
             if (existingUser)
             {
-                return null;
+                throw new InvalidOperationException("User already exists.");
             }
+
 
             // Check if the user password and confirm password match
             if (request.Password != request.ConfirmPassword)
             {
-                return null;
+                throw new UnauthorizedAccessException("Password is not match");
             }
 
             // if not exits create new User
@@ -69,31 +69,32 @@ namespace UserProfile.Services
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
-            // Check if the user exists
+            // 1. Check if user exists
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
             if (user is null)
             {
-                return null;
+                throw new UnauthorizedAccessException("Invalid email.");
             }
 
-            // verify password
+            // 2. Verify password
             var passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password);
-            if(passwordVerificationResult == PasswordVerificationResult.Failed)
+
+            if (passwordVerificationResult == PasswordVerificationResult.Failed)
             {
-                return null;
+                throw new UnauthorizedAccessException("Invalid password.");
             }
 
-
-            // Generate Tokens
+            // 3. Generate tokens
             var accessToken = GenerateJwtAccessToken(user);
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
 
-            // return user
+            // 4. Success
             return new LoginResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                User = user,
+                User = user
             };
         }
 
@@ -105,7 +106,7 @@ namespace UserProfile.Services
             var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
             if (user is null)
             {
-                return null;
+                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
             // generate and save new refresh token
             var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(user);
@@ -184,7 +185,7 @@ namespace UserProfile.Services
             var user = await context.Users.FindAsync(UserId);
             if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
-                return null;
+                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
             return user;
         }

@@ -80,6 +80,21 @@ Implement Refresh Token
 5. Create EndPoint inside controller name RefreshToken  and Send back the new AccessToken and RefreshToken to the Client.
 
 
+Handling Errors Middlewares:
+1. Create error handling middleware like ExceptionHandlingMiddleware.cs
+2. Add Middleware inside Program.cs and it should be before UseAuthorization and MapControllers
+3. Add Middleware as following: app.UseMiddleware<ExceptionHandlingMiddleware>();
+4. Remove every try and catch block because the middlware handle everything by it self.
+	try { ... } catch { ... }
+5. Use Middleware as following:
+	throw new InvalidOperationException("Boom");
+	throw new Exception("Something went wrong");
+	...
+
+
+
+
+
  
 
 
