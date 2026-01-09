@@ -91,6 +91,36 @@ Handling Errors Middlewares:
 	throw new Exception("Something went wrong");
 	...
 
+Add Logger middleware to log messages:
+1. Install package name Serilog as following:
+
+	dotnet add package Serilog.AspNetCore
+	dotnet add package Serilog.Sinks.File
+	dotnet add package Serilog.Sinks.Console
+
+2. Add Logger configuration in Program.cs
+	Log.Logger = new LoggerConfiguration()
+		.MinimumLevel.Debug()
+		.WriteTo.Console()
+		.WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+		.CreateLogger();
+
+
+
+Add CustomLogger:
+1. Create CustomLogger class
+2. Create Interface CustomLogger
+3. Register CustomLogger inside program.cs
+
+Add LoggerMiddleware:
+1. Create RequestLoggingMiddleware.cs file inside Middleware folder
+2. Add Logic 
+3. Use CustomLogger to log information into a files
+
+	
+
+
+
 
 
 

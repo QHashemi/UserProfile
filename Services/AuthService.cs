@@ -10,11 +10,12 @@ using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
+using UserProfile.Utils;
 
 
 namespace UserProfile.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext context, IConfiguration configuration, ICustomLogger _logger) : IAuthService
     {
         public async Task<User> RegisterAsync(RegisterRequestDto request)
         {
@@ -22,6 +23,7 @@ namespace UserProfile.Services
             var existingUser = await context.Users.AnyAsync(user => user.Email == request.Email);
             if (existingUser)
             {
+
                 throw new InvalidOperationException("User already exists.");
             }
 
@@ -74,6 +76,7 @@ namespace UserProfile.Services
 
             if (user is null)
             {
+                
                 throw new UnauthorizedAccessException("Invalid email.");
             }
 
@@ -155,8 +158,6 @@ namespace UserProfile.Services
             // return token
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
-
-
 
 
         

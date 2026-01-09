@@ -4,14 +4,16 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UserProfile.Data;
 using UserProfile.Services;
+using UserProfile.Utils;
 
+
+// SERVICES =========================================================================================>
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-
+// Register Controllers
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+//// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+//builder.Services.AddOpenApi();
 
 // Sql Server connection 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString")));
@@ -30,14 +32,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
-// Register Controllers
+// Register Controllers so that i can use _env, database configuration inside class
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Register custom logger so that i can use _env files inside the CustomLogger Class
+builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
 
+
+
+// MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
 
 // Error Handling Middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// LogMiddlware
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 
 // Configure the HTTP request pipeline.
@@ -50,6 +60,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 // Activate Authentication for every endpoint
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
