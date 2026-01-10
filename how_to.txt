@@ -80,7 +80,7 @@ Implement Refresh Token
 5. Create EndPoint inside controller name RefreshToken  and Send back the new AccessToken and RefreshToken to the Client.
 
 
-Handling Errors Middlewares:
+Handling Errors Middlewares: (IT WILL HANLDE REQUEST AND RESPONSE ERROR)
 1. Create error handling middleware like ExceptionHandlingMiddleware.cs
 2. Add Middleware inside Program.cs and it should be before UseAuthorization and MapControllers
 3. Add Middleware as following: app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -91,7 +91,9 @@ Handling Errors Middlewares:
 	throw new Exception("Something went wrong");
 	...
 
-Add Logger middleware to log messages:
+
+
+Add Logger middleware to log messages via packages:
 1. Install package name Serilog as following:
 
 	dotnet add package Serilog.AspNetCore
@@ -119,7 +121,15 @@ Add LoggerMiddleware:
 
 	
 
+Middleware for Secure your web application by automatically setting HTTP security headers (It will god for securing app against SQL Injection or any other stoff)
+1. Use Built in Middleware to secure app.
+2. Create Middleware name SecureHeaderMiddleware.cs
+3. add Login of middleware
+4. Inject the middlware in program.cs like following:
+	app.UseMiddleware<SecureHeaderMiddleware>();
 
+	
+	
 
 
 

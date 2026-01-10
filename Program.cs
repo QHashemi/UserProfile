@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UserProfile.Data;
+using UserProfile.Middleware;
 using UserProfile.Services;
 using UserProfile.Utils;
 
@@ -43,26 +44,38 @@ builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
 // MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts(); // only in production
+}
 
-// LogMiddlware
-app.UseMiddleware<RequestLoggingMiddleware>();
 
-// Error Handling Middleware
+// 1️⃣ Exception handling must be first
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    //app.MapOpenApi();
-//    //app.MapScalarApiReference();
-//}
-
+// 2️⃣ Redirect HTTP to HTTPS
 app.UseHttpsRedirection();
 
-// Activate Authentication for every endpoint
+// 3️⃣ Security headers
+app.UseMiddleware<SecureHeaderMiddleware>();
+
+// 4️⃣ Log requests (metadata only)
+app.UseMiddleware<RequestLoggingMiddleware>();
+
+
+// Configure the HTTP request pipeline. 
+//if (app.Environment.IsDevelopment())
+//{ 
+//app.MapOpenApi(); 
+//app.MapScalarApiReference(); 
+//}
+
+
+// 5️⃣ Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 6️⃣ Map controllers
 app.MapControllers();
 
 app.Run();
