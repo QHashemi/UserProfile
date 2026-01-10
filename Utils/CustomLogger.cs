@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.Json;
+using System.Threading.Tasks;
+using UserProfile.Dto.Response;
 using UserProfile.Utils;
 
 public class CustomLogger : ICustomLogger
@@ -11,20 +13,20 @@ public class CustomLogger : ICustomLogger
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }
 
-    public async Task Trace(string message) => await Log("TRACE", message);
+    public async Task Trace(string message = "", string userIdentifier ="", string logEvent ="", int statusCode=0) => await Log("TRACE", message, userIdentifier, logEvent, statusCode);
 
-    public async Task Debug(string message) => await Log("DEBUG", message);
+    public async Task Debug(string message = "" , string userIdentifier = "", string logEvent = "", int statusCode = 0) => await Log("DEBUG", message, userIdentifier, logEvent, statusCode);
 
-    public async Task Info(string message) => await Log("INFO", message);
+    public async Task Info(string message = "", string userIdentifier = "", string logEvent = "", int statusCode = 0) => await Log("INFO", message, userIdentifier, logEvent ,statusCode);
 
-    public async Task Warning(string message) => await Log("WARN", message);
+    public async Task Warning(string message = "", string userIdentifier = "", string logEvent = "", int statusCode = 0) => await Log("WARN", message, userIdentifier, logEvent,statusCode);
 
-    public async Task Error(string message, Exception? ex = null) => await Log("ERROR", message, ex);
+    public async Task Error(string message = "",string userIdentifier = "", string logEvent = "", int statusCode = 0) => await Log("ERROR", message,userIdentifier, logEvent, statusCode);
 
-    public async Task Critical(string message, Exception? ex = null) => await Log("CRITICAL", message, ex);
+    public async Task Critical(string message = "", string userIdentifier = "", string logEvent = "", int statusCode = 0) => await Log("CRITICAL", message,userIdentifier,logEvent, statusCode);
 
     // Process Logging
-    private async Task Log(string level, string message, Exception? ex = null)
+    private async Task Log(string level = "", string message = "", string userIdentifier ="", string logEvent="", int statusCode =0)
     {
         try
         {
@@ -32,27 +34,27 @@ public class CustomLogger : ICustomLogger
             switch (level)
             {
                 case "TRACE":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
                 case "DEBUG":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
                 case "INFO":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
                 case "WARN":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
                 case "CRITICAL":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
                 case "ERROR":
-                    await WriteToFileAsync(level, message);
+                    await WriteToFileAsync(level, message, userIdentifier, logEvent, statusCode);
                     Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level}] {message}");
                     break;
 
@@ -61,29 +63,41 @@ public class CustomLogger : ICustomLogger
             }
 
         }
-        catch (Exception) { 
+        catch (Exception error) { 
         
-            await WriteToFileAsync("EXCEPTION", ex.Message);
+            Console.Write(error.ToString());
         }
     }
 
 
     // Function to create log file and save it inside the files
-    private async Task WriteToFileAsync(string fileName, string text)
+    private async Task WriteToFileAsync(string level = "", string message = "", string userIdentifier ="", string logEvent="", int statusCode=0)
     {
         try
         {
+            // Format the Log file:
+            var loggingText = new LoggingResponseDto
+            {
+                Level = level,
+                Message = message,
+                UserIdentifier = userIdentifier,
+                LogEvent = logEvent,
+                StatusCode = statusCode,
+                TimeStamp = $"[{DateTime.UtcNow}]",
+            };
+
             // get Log Path
             var logPath = Path.Combine(_env.ContentRootPath, "Logs");
             // if path not exits create one
             Directory.CreateDirectory(logPath);
 
-            var logFilePath = Path.Combine(logPath, $"{fileName}.log");
-            await File.AppendAllTextAsync(logFilePath, text + Environment.NewLine);
+            var jsonText = JsonSerializer.Serialize(loggingText);
+            var logFilePath = Path.Combine(logPath, $"{level}.log");
+            await File.AppendAllTextAsync(logFilePath, jsonText + Environment.NewLine);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Console.WriteLine($"Failed to write log: {ex.Message}");
+            Console.WriteLine($"Failed to write log: {exception.Message}");
         }
 
     }

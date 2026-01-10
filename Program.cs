@@ -43,12 +43,12 @@ builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
 // MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
 
-// Error Handling Middleware
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // LogMiddlware
 app.UseMiddleware<RequestLoggingMiddleware>();
 
+// Error Handling Middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())

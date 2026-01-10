@@ -24,6 +24,10 @@ namespace UserProfile.Services
             if (existingUser)
             {
 
+                await _logger.Warning(
+                    message: "Registration failed: user already exists",
+                    logEvent: "AUTH_REGISTER_FAILED"
+                );
                 throw new InvalidOperationException("User already exists.");
             }
 
@@ -31,6 +35,10 @@ namespace UserProfile.Services
             // Check if the user password and confirm password match
             if (request.Password != request.ConfirmPassword)
             {
+                await _logger.Warning(
+                   message: "Registration failed: password mismatch",
+                   logEvent: "AUTH_REGISTER_FAILED"
+               );
                 throw new UnauthorizedAccessException("Password is not match");
             }
 
@@ -63,6 +71,12 @@ namespace UserProfile.Services
             // save db changes
             await context.SaveChangesAsync();
 
+            await _logger.Info(
+                message: "User registered successfully",
+                logEvent: "AUTH_REGISTER_SUCCEEDED",
+                userIdentifier: user.Id.ToString()
+            );
+
             // return user
             return user;
         }
@@ -71,28 +85,40 @@ namespace UserProfile.Services
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
-            // 1. Check if user exists
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user is null)
             {
-                
-                throw new UnauthorizedAccessException("Invalid email.");
+                await _logger.Warning(
+                    message: "Login failed: invalid credentials",
+                    logEvent: "AUTH_LOGIN_FAILED"
+                );
+
+                throw new UnauthorizedAccessException("Invalid credentials.");
             }
 
-            // 2. Verify password
-            var passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            var verificationResult = new PasswordHasher<User>()
+                .VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
-            if (passwordVerificationResult == PasswordVerificationResult.Failed)
+            if (verificationResult == PasswordVerificationResult.Failed)
             {
-                throw new UnauthorizedAccessException("Invalid password.");
+                await _logger.Warning(
+                    message: "Login failed: invalid credentials",
+                    logEvent: "AUTH_LOGIN_FAILED"
+                );
+
+                throw new UnauthorizedAccessException("Invalid credentials.");
             }
 
-            // 3. Generate tokens
             var accessToken = GenerateJwtAccessToken(user);
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
 
-            // 4. Success
+            await _logger.Info(
+                message: "Login succeeded",
+                logEvent: "AUTH_LOGIN_SUCCEEDED",
+                userIdentifier: user.Id.ToString()
+            );
+
             return new LoginResponseDto
             {
                 AccessToken = accessToken,
@@ -102,6 +128,7 @@ namespace UserProfile.Services
         }
 
 
+
         // Generate Refresh and AccessToken
         public async Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
         {
@@ -109,11 +136,24 @@ namespace UserProfile.Services
             var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
             if (user is null)
             {
+                await _logger.Warning(
+                      message: "Refresh token validation failed",
+                      logEvent: "REFRESH_TOKEN_FAILED",
+                      userIdentifier: request.UserId.ToString()
+                  );
+
                 throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
             // generate and save new refresh token
             var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(user);
             var newAccessToken = GenerateJwtAccessToken(user);
+
+
+            await _logger.Info(
+                  message: "Refresh token succeeded",
+                  logEvent: "REFRESH_TOKEN_SUCCEEDED",
+                  userIdentifier: user.Id.ToString()
+              );
             return new LoginResponseDto
             {
                 User = user,
@@ -144,7 +184,6 @@ namespace UserProfile.Services
 
             // create credentials
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-
 
             // create token
             var tokenDescriptor = new JwtSecurityToken(
@@ -186,8 +225,15 @@ namespace UserProfile.Services
             var user = await context.Users.FindAsync(UserId);
             if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
+                await _logger.Warning(message: "Invalid or expired refresh token.", logEvent: "REFRESH-TOKEN-FAILED");
                 throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
+
+            await _logger.Info(
+                 message: "Refresh token succeeded",
+                 logEvent: "REFRESH_TOKEN_SUCCEEDED",
+                 userIdentifier: user.Id.ToString()
+             );
             return user;
         }
 

@@ -1,28 +1,57 @@
-﻿using UserProfile.Utils;
+﻿using System.Diagnostics;
+using System.Security.Claims;
+using UserProfile.Utils;
 
-public class RequestLoggingMiddleware
+public sealed class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ICustomLogger _logger;
 
-    public RequestLoggingMiddleware(RequestDelegate next, ICustomLogger logger)
+    public RequestLoggingMiddleware(
+        RequestDelegate next,
+        ICustomLogger logger)
     {
-        _next = next;
+        _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         try
         {
-            await _logger.Info($"Incoming Request: {context.Request.Method} {context.Request.Path}");
             await _next(context);
-            await _logger.Info($"Response Status Code: {context.Response.StatusCode}");
         }
+
         catch (Exception ex)
         {
-            await _logger.Error("Unhandled exception in middleware", ex);
-            throw;
+            // Log unhandled exception with context (NO body, NO secrets)
+            await _logger.Critical(
+                message: "Unhandled exception during HTTP request",
+                userIdentifier: GetActorId(context),
+                logEvent: "HTTP_UNHANDLED_EXCEPTION",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
+
+            throw; // let exception middleware handle response
         }
+        finally
+        {
+            stopwatch.Stop();
+
+            await _logger.Info(
+                message: $"{context.Request.Method} {context.Request.Path}",
+                logEvent: "HTTP_REQUEST_COMPLETED",
+                statusCode: context.Response.StatusCode
+            );
+        }
+    }
+
+    private static string? GetActorId(HttpContext context)
+    {
+        // JWT / OIDC standard claim
+        return context.User?.FindFirst("sub")?.Value
+            ?? context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }
