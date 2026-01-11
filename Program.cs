@@ -11,6 +11,10 @@ using UserProfile.Utils;
 
 // SERVICES =========================================================================================>
 var builder = WebApplication.CreateBuilder(args);
+
+// Register HttpContext accessor
+builder.Services.AddHttpContextAccessor();
+
 // Register Controllers
 builder.Services.AddControllers();
 
@@ -23,15 +27,13 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
         new RateLimitRule
         {
             Endpoint = "*", // all endpoints
-            Limit = 10,    // 100 requests
+            Limit = 20,    // 10 requests
             Period = "1m"   // per 1 minute
         }
     };
 });
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-
-
 
 
 //// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -64,6 +66,7 @@ builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
 
 // MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
+
 
 // Add Rate Limit Middleware
 app.UseIpRateLimiting();

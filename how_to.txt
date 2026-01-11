@@ -152,6 +152,21 @@ Add Rate-Limiting, so that the user not send multiple request:
 	app.UseIpRateLimiting();
 
 
+Implement Credential Stuffing Protection to prevent attackers from repeatedly trying passwords.
+
+1. Create LoginAttemptTracker.cs
+
+	Use a ConcurrentDictionary to track failed login attempts per user/IP.
+	Store both the count of failures and timestamp of last attempt.
+
+2. Integrate LoginAttemptTracker in the login flow
+
+	Before login, check if the user/IP is temporarily blocked (IsBlocked).
+	After failed login, record the attempt (RecordFailure).
+	After successful login, reset the counter (Reset).
+
+3. Optional: Use a sliding time window (e.g., block after 5 failures within 10 minutes).
+4. Result: Protects against brute-force and credential-stuffing attacks while still allowing normal users to log in.
 
 
 

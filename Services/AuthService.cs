@@ -15,8 +15,28 @@ using UserProfile.Utils;
 
 namespace UserProfile.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration, ICustomLogger _logger) : IAuthService
+    public class AuthService : IAuthService
     {
+        private readonly AppDbContext context;
+        private readonly IConfiguration configuration;
+        private readonly ICustomLogger _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+
+        public AuthService(
+            AppDbContext context,
+            IConfiguration configuration,
+            ICustomLogger logger,
+            IHttpContextAccessor httpContextAccessor)
+        {
+            this.context = context;
+            this.configuration = configuration;
+            _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+
+
         public async Task<User> RegisterAsync(RegisterRequestDto request)
         {
             // Check if the user already exists
@@ -85,40 +105,56 @@ namespace UserProfile.Services
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
+            // Get client IP address (used for rate limiting & security)
+            var clientIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Create a unique key per IP + email to track login attempts
+            var attemptKey = $"{clientIp}:{request.Email?.ToLowerInvariant() ?? "unknown"}";
+
+            // Block login if too many failed attempts occurred
+            if (LoginAttemptTracker.IsBlocked(attemptKey))
+            {
+                // Log blocked login attempt
+                await _logger.Warning(message: "Login blocked due to too many failed attempts",logEvent: "AUTH_LOGIN_BLOCKED");
+                throw new UnauthorizedAccessException("Too many login attempts. Try again later.");
+            }
+
+            // Try to find user by email
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+            // If user does not exist
             if (user is null)
             {
-                await _logger.Warning(
-                    message: "Login failed: invalid credentials",
-                    logEvent: "AUTH_LOGIN_FAILED"
-                );
-
+                // Record failed login attempt
+                LoginAttemptTracker.RecordFailure(attemptKey);
+                await _logger.Warning(message: "Login failed: invalid credentials",logEvent: "AUTH_LOGIN_FAILED");
                 throw new UnauthorizedAccessException("Invalid credentials.");
             }
 
-            var verificationResult = new PasswordHasher<User>()
-                .VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            // Verify submitted password against stored hash
+            var verificationResult = new PasswordHasher<User>().VerifyHashedPassword(
+                user,
+                user.PasswordHash,
+                request.Password
+            );
 
+            // If password is incorrect
             if (verificationResult == PasswordVerificationResult.Failed)
             {
-                await _logger.Warning(
-                    message: "Login failed: invalid credentials",
-                    logEvent: "AUTH_LOGIN_FAILED"
-                );
-
+                // Record failed login attempt
+                LoginAttemptTracker.RecordFailure(attemptKey);
+                await _logger.Warning( message: "Login failed: invalid credentials",logEvent: "AUTH_LOGIN_FAILED");
                 throw new UnauthorizedAccessException("Invalid credentials.");
             }
+
+            // Login succeeded → reset failed attempt counter
+            LoginAttemptTracker.Reset(attemptKey);
 
             var accessToken = GenerateJwtAccessToken(user);
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+            await _logger.Info(message: "Login succeeded",logEvent: "AUTH_LOGIN_SUCCEEDED", userIdentifier: user.Id.ToString());
 
-            await _logger.Info(
-                message: "Login succeeded",
-                logEvent: "AUTH_LOGIN_SUCCEEDED",
-                userIdentifier: user.Id.ToString()
-            );
-
+            // Return authentication response
             return new LoginResponseDto
             {
                 AccessToken = accessToken,
@@ -129,6 +165,7 @@ namespace UserProfile.Services
 
 
 
+
         // Generate Refresh and AccessToken
         public async Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
         {
@@ -136,12 +173,7 @@ namespace UserProfile.Services
             var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
             if (user is null)
             {
-                await _logger.Warning(
-                      message: "Refresh token validation failed",
-                      logEvent: "REFRESH_TOKEN_FAILED",
-                      userIdentifier: request.UserId.ToString()
-                  );
-
+                await _logger.Warning(message: "Refresh token validation failed",logEvent: "REFRESH_TOKEN_FAILED",userIdentifier: request.UserId.ToString());
                 throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
             // generate and save new refresh token
@@ -149,11 +181,7 @@ namespace UserProfile.Services
             var newAccessToken = GenerateJwtAccessToken(user);
 
 
-            await _logger.Info(
-                  message: "Refresh token succeeded",
-                  logEvent: "REFRESH_TOKEN_SUCCEEDED",
-                  userIdentifier: user.Id.ToString()
-              );
+            await _logger.Info( message: "Refresh token succeeded",logEvent: "REFRESH_TOKEN_SUCCEEDED",userIdentifier: user.Id.ToString());
             return new LoginResponseDto
             {
                 User = user,

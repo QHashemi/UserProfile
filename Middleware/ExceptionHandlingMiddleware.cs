@@ -1,5 +1,6 @@
 ﻿
 
+using System.Threading.RateLimiting;
 using UserProfile.Utils;
 
 public class ExceptionHandlingMiddleware
@@ -30,6 +31,8 @@ public class ExceptionHandlingMiddleware
                 ArgumentException => StatusCodes.Status400BadRequest,
                 KeyNotFoundException => StatusCodes.Status404NotFound,
                 TimeoutException => StatusCodes.Status408RequestTimeout,
+
+
                 InvalidOperationException => StatusCodes.Status409Conflict, _ => StatusCodes.Status500InternalServerError
             };
 
