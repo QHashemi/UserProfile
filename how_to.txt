@@ -129,7 +129,29 @@ Middleware for Secure your web application by automatically setting HTTP securit
 	app.UseMiddleware<SecureHeaderMiddleware>();
 
 	
-	
+
+Add Rate-Limiting, so that the user not send multiple request:
+1. Install package name AspNetCoreRateLimit
+2. Add configuation inside the program.cs
+	builder.Services.AddMemoryCache();
+	builder.Services.Configure<IpRateLimitOptions>(options =>
+	{
+		options.GeneralRules = new List<RateLimitRule>
+		{
+			new RateLimitRule
+			{
+				Endpoint = "*", // all endpoints
+				Limit = 10,    // 10 requests
+				Period = "1m"   // per 1 minute
+			}
+		};
+	});
+	builder.Services.AddInMemoryRateLimiting();
+	builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+3. Add the middleware:
+	app.UseIpRateLimiting();
+
+
 
 
 

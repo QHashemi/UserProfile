@@ -1,4 +1,4 @@
-﻿
+﻿using System.Security.Claims;
 using UserProfile.Utils;
 
 namespace UserProfile.Middleware
@@ -25,25 +25,34 @@ namespace UserProfile.Middleware
             try
             {
                 await _next(context);
-
-                // Optional: log successful request
-                await _logger.Info(
-                    message: $"{context.Request.Method} {context.Request.Path}",
-                    logEvent: "HTTP_REQUEST_COMPLETED",
-                    statusCode: context.Response.StatusCode
-                );
             }
             catch (Exception ex)
             {
-                // Log exception
                 await _logger.Critical(
                     message: $"Unhandled exception: {ex.Message}",
                     logEvent: "HTTP_REQUEST_EXCEPTION",
-                    statusCode: 500
+                    statusCode: 500,
+                    userIdentifier: GetActorId(context) // <-- now defined
                 );
 
                 throw;
             }
+            finally
+            {
+                await _logger.Info(
+                    message: $"{context.Request.Method} {context.Request.Path}",
+                    logEvent: "HTTP_REQUEST_COMPLETED",
+                    statusCode: context.Response.StatusCode,
+                    userIdentifier: GetActorId(context)
+                );
+            }
+        }
+
+        // Helper method to get the user identifier from JWT or ClaimsPrincipal
+        private static string? GetActorId(HttpContext context)
+        {
+            return context.User?.FindFirst("sub")?.Value
+                   ?? context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
     }
 }
