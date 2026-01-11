@@ -7,9 +7,7 @@ public sealed class RequestLoggingMiddleware
     private readonly RequestDelegate _next;
     private readonly ICustomLogger _logger;
 
-    public RequestLoggingMiddleware(
-        RequestDelegate next,
-        ICustomLogger logger)
+    public RequestLoggingMiddleware(RequestDelegate next,ICustomLogger logger)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -2,7 +2,7 @@
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
 
-namespace UserProfile.Services
+namespace UserProfile.Services.AuthService
 {
     public interface IAuthService
     {

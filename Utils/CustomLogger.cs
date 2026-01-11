@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using UserProfile.Dto.Response;
-using UserProfile.Utils;
+using UserProfile.Utils.Interfaces;
 
 public class CustomLogger : ICustomLogger
 

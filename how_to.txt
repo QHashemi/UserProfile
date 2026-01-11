@@ -119,7 +119,6 @@ Add LoggerMiddleware:
 2. Add Logic 
 3. Use CustomLogger to log information into a files
 
-	
 
 Middleware for Secure your web application by automatically setting HTTP security headers (It will god for securing app against SQL Injection or any other stoff)
 1. Use Built in Middleware to secure app.
@@ -155,12 +154,10 @@ Add Rate-Limiting, so that the user not send multiple request:
 Implement Credential Stuffing Protection to prevent attackers from repeatedly trying passwords.
 
 1. Create LoginAttemptTracker.cs
-
 	Use a ConcurrentDictionary to track failed login attempts per user/IP.
 	Store both the count of failures and timestamp of last attempt.
 
 2. Integrate LoginAttemptTracker in the login flow
-
 	Before login, check if the user/IP is temporarily blocked (IsBlocked).
 	After failed login, record the attempt (RecordFailure).
 	After successful login, reset the counter (Reset).
@@ -169,6 +166,10 @@ Implement Credential Stuffing Protection to prevent attackers from repeatedly tr
 4. Result: Protects against brute-force and credential-stuffing attacks while still allowing normal users to log in.
 
 
+
+Implement Middleware to block ips that you dont want to access your backend:
+1. Create Middleware name BlockSuspiciousIpsMiddleware.cs.
+2. Register Middleware inside the program.cs
 
 
 

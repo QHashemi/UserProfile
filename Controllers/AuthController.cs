@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
-using UserProfile.Services;
+using UserProfile.Services.AuthService;
 
 namespace UserProfile.Controllers
 {

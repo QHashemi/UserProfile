@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
 
-namespace UserProfile.Utils
+namespace UserProfile.Utils.Interfaces
 {
     public interface ICustomLogger
     {

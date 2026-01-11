@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using UserProfile.Utils;
+using UserProfile.Utils.Interfaces;
 
 namespace UserProfile.Middleware
 {

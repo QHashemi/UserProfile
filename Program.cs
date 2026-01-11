@@ -62,11 +62,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Register custom logger so that i can use _env files inside the CustomLogger Class
 builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
 
-
-
 // MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
 
+// Register your custom IP blocking middleware
+app.UseMiddleware<BlockSuspiciousIpsMiddleware>();
 
 // Add Rate Limit Middleware
 app.UseIpRateLimiting();
