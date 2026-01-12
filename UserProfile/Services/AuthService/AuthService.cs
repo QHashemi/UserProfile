@@ -37,7 +37,6 @@ namespace UserProfile.Services.AuthService
         }
 
 
-
         public async Task<User> RegisterAsync(RegisterRequestDto request)
         {
             // Check if the user already exists
@@ -227,8 +226,6 @@ namespace UserProfile.Services.AuthService
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
 
-
-        
    
         // Refresh Token Handler =================================================================>
         // Generate Refresh Token

@@ -18,8 +18,14 @@ namespace UserProfile.Startup
             // Register RateLimit for controll Multiple Request
             builder.Services.EndPointRateLimitConfig();
 
-            //// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApiService();
+
+            // Add Cors Service
+            builder.Services.AddCorsServices();
+
+            // Health check service
+            builder.Services.AddAllHealthChecks();
 
             // Sql Server connection 
             builder.Services.AddAppDbContextConfig(builder.Configuration);

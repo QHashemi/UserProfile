@@ -224,3 +224,28 @@ Create folder name Startup
 2. Then we can Bind the dependencie inside Program.cs
 
 
+
+Add Cors Configuration.
+1. Creat file name CorsConfiguration.cs
+2. Add Logic of Cors
+3. Inject the Configuration inside the Program.cs as following:
+Example: app.ApplyCorsConfig();
+4. Inject the Cors also inside the Dependencies config as well.
+Example: builder.Services.AddCorsServices();
+
+
+Create HealthCheck with packages.
+1. Install following Package AspNetCore.HealthChecks.UI.Client
+2. Create folder name HealthCheck 
+3. Inside HealthCheck folder Create follwoing files:
+	HealthyHealthCheck.cs
+	DegradedHealthCheck.cs
+	RandomHealthCheck.cs
+	UnhealtyHealthCheck.cs
+
+4. Create file name HealthCheckConfiguration.cs and Logic of the configuration
+5. Inject HealthCheckService in DependenciesConfig.cs
+   Example:  builder.Services.AddAllHealthChecks();
+6. Inject HealthCheckService inside the program.cs
+   Example: app.MapAllHealthChecks();
+

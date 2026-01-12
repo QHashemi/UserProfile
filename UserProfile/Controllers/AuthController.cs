@@ -26,6 +26,7 @@ namespace UserProfile.Controllers
             });
         }
 
+
         // Login
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request) 

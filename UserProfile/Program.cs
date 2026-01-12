@@ -33,6 +33,12 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // 2️⃣ Redirect HTTP to HTTPS
 app.UseHttpsRedirection();
 
+// 30 Apply cors
+app.ApplyCorsConfig();
+
+// Map all health check
+app.MapAllHealthChecks();
+
 // 3️⃣ Security headers
 app.UseMiddleware<SecureHeaderMiddleware>();
 
