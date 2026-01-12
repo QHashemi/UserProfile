@@ -1,8 +1,13 @@
-﻿namespace UserProfile.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace UserProfile.Entities
 {
     public class User
     {
         public Guid Id { get; set; }
+
+        [Required]
+        [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

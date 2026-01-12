@@ -11,9 +11,10 @@ using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
 using UserProfile.Utils;
+using UserProfile.Utils.Interfaces;
 
 
-namespace UserProfile.Services
+namespace UserProfile.Services.AuthService
 {
     public class AuthService : IAuthService
     {

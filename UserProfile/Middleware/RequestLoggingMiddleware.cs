@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Security.Claims;
-using UserProfile.Utils;
+using UserProfile.Utils.Interfaces;
 
 public sealed class RequestLoggingMiddleware
 {

@@ -1,4 +1,4 @@
-Setup database using Entity Framework Core:
+﻿Setup database using Entity Framework Core:
 1. Create folder name Entities and add User.cs entity
 2. Create folder name Data and add DbContext.cs
 3. Create Db in sql server management studio
@@ -173,9 +173,54 @@ Implement Middleware to block ips that you dont want to access your backend:
 
 
 
- 
+Api Testing ⇒ Unit Testing
+
+1. Create a new xUnit Test Project (Name it after the project you are testing).
+	Example: UserProfile => UserProfile.Tests
+
+2. The new Method will be create it automaticly inside the test project tree
+3. Rename the TestProject to you aktuall controller, Service, Helper etc, that you wanna test.
+4. Create Fake Database connection like below:
+	private readonly DbContextOptionsBuilder<AppDbContext> dbContext= new();
+	private AppDbContext ReturnContext() 
+    {
+        var options = dbContext.UseInMemoryDatabase(databaseName: "TestDb").Options;
+        using var context = new AppDbContext(options);
+        return context;
+    }
+5. Create Method with name of you EndPoint you wanna test:
+	Example: In this example i wanna test Health of the api
+	[Fact]
+        public void HealthTest()
+        {
+            // Arrange ================>
+            var healthController = new ApiHealthController(ReturnContext(), CreateFakeLogger());
+
+            // Act ==================>
+            var actionResult = healthController.GetHealth();
+
+            // Assert ==================>
+            var okResult = actionResult.Result as ObjectResult; // unwrap safely
+            var healtResult = okResult?.Value as TestControllersResponseDto;
+            Assert.NotNull(healtResult);
+            Assert.Equal("Healthy", healtResult.Status); 
+        }
+6. After creation run test Project to test api
+
+6. To Create Fake instance of ICustomLogger need to install moq package.
+7. Use the package as following.
+	private static ICustomLogger CreateFakeLogger()
+        {
+            return Mock.Of<ICustomLogger>();
+        }
 
 
+Configure Config folder
+1. Create Different configuration file inside the Config folder.
+2. after that we can inject the configuration file into Program.cs
 
+Create folder name Startup
+1. We can move every builder Dependiencies in Seprate file.
+2. Then we can Bind the dependencie inside Program.cs
 
 

@@ -1,12 +1,11 @@
 ﻿using System.Collections.Concurrent;
-using UserProfile.Utils.Interfaces;
 
 namespace UserProfile.Utils
 {
-    public class LoginAttemptTracker : ILoginAttemptTracker
+    public class LoginAttemptTracker 
     {
         private static readonly ConcurrentDictionary<string, (int Count, DateTime LastAttempt)> _attempts = new();
-        public bool IsBlocked(string key)
+        public static bool IsBlocked(string key)
         {
             if(!_attempts.TryGetValue( key, out var entry ))
                 return false;
@@ -19,7 +18,7 @@ namespace UserProfile.Utils
             return false;
 
         }
-        public void RecordFailure(string key)
+        public static void RecordFailure(string key)
         {
             _attempts.AddOrUpdate(key, (1, DateTime.UtcNow), (_,existing) => {
                 if (DateTime.UtcNow - existing.LastAttempt > TimeSpan.FromSeconds(5))
@@ -31,7 +30,7 @@ namespace UserProfile.Utils
             });
         }
 
-        public void Reset(string key)
+        public static void Reset(string key)
         {
             _attempts.TryRemove(key, out _);
         }

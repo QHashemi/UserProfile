@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using UserProfile.Data;
+using UserProfile.Dto.Response;
+using UserProfile.Utils.Interfaces;
 
 namespace UserProfile.Controllers
 {
@@ -11,15 +12,16 @@ namespace UserProfile.Controllers
 
     [ApiController]
     [Route("/api")]
-    public class HealthController(AppDbContext context) : ControllerBase
+    public class ApiHealthController(AppDbContext context, ICustomLogger logger) : ControllerBase
     {
+
         /// <summary>
         /// Basic API connectivity test.
         /// </summary>
         [HttpGet("ping")]
         public ActionResult<string> Ping()
         {
-            return "Hello from Production API!";
+            return Ok(ResponseDto("Healthy"));
         }
 
         /// <summary>
@@ -28,71 +30,78 @@ namespace UserProfile.Controllers
         [HttpGet("health")]
         public ActionResult<object> GetHealth()
         {
-            TimeSpan uptime = DateTime.UtcNow - AppLifetime.StartTime;
 
-            var healthStatus = new
-            {
-                status = "Healthy",
-                timestamp = DateTime.UtcNow,
-                uptime = uptime
-            };
-
-            return Ok(healthStatus);
+            return Ok(ResponseDto("Healthy"));
         }
-
 
         /// <summary>
         /// General API status check.
         /// </summary>
         [HttpGet("status")]
-        public ActionResult<string> GetApiStatus()
+        public ActionResult<TestControllersResponseDto> GetApiStatus()
         {
-            return "Production API is running smoothly";
+            return Ok(ResponseDto("Healthy"));
         }
 
         /// <summary>
         /// Database connectivity check.
         /// </summary>
         [HttpGet("database")]
-        public async Task<ActionResult<string>> CheckDatabase()
+        public async Task<ActionResult<TestControllersResponseDto>> CheckDatabase()
         {
             // check database connection
             try
             {
+                TimeSpan uptime = DateTime.UtcNow - AppLifetime.StartTime;
                 var canConnect = await context.Database.CanConnectAsync();
                 if (canConnect) 
                 {
-                    return Ok("Database connection is healthy");
+                    return Ok(ResponseDto("Healthy"));
                 }
                 else
                 {
-                    return StatusCode(503, "Database connection failed");
-
+                    await logger.Critical(message: "Unhealthy Database connection", logEvent:"DATABASE_HEALTH_TEST");
+                    return ResponseDto("Unhealthy");
                 }
             }
             catch (Exception ex) {
+                await logger.Critical(message: "Database connection check failed", logEvent: "DATABASE_HEALTH_TEST");
                 return StatusCode(500, $"Database check failed: {ex.Message}");
             }
         }
-
 
 
         /// <summary>
         /// Readiness probe for container orchestration.
         /// </summary>
         [HttpGet("ready")]
-        public ActionResult<string> Readiness()
+        public ActionResult<TestControllersResponseDto> Readiness()
         {
-            return "Application is ready";
+            TimeSpan uptime = DateTime.UtcNow - AppLifetime.StartTime;
+            return Ok(ResponseDto("Healthy"));
         }
 
         /// <summary>
         /// Liveness probe for container orchestration.
         /// </summary>
         [HttpGet("live")]
-        public ActionResult<string> Liveness()
+        public ActionResult<TestControllersResponseDto> Liveness()
         {
-            return "Application is live";
+            return Ok(ResponseDto("Healthy"));
+        }
+
+
+
+        // Method to return Response
+        private TestControllersResponseDto ResponseDto(string status)
+        {
+            TimeSpan uptime = DateTime.UtcNow - AppLifetime.StartTime;
+            return new TestControllersResponseDto
+            {
+                Status = status,
+                TimeStamp = DateTime.UtcNow,
+                Uptime = uptime
+            };
         }
     }
 }

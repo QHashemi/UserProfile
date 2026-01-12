@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="UserProfile.Test/UserProfile.Test.csproj" Id="25b619fe-5271-46ae-b302-2cedb9a2a688" />
+  <Project Path="UserProfile/UserProfile.csproj" />
+</Solution>
