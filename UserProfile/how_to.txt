@@ -10,6 +10,19 @@
    - Update-Database
 
 
+Setup postgesql
+1. Install package name: Npgsql.EntityFrameworkCore.PostgreSQL
+2. Add Database connection configuration:
+3. Create Method name AddAppDbContext => for connection string etc..
+4. Create Method name MigrateDatabase => to migrate the db on startup
+5. If the database creation not work. 
+	a. Remove all migration 
+	b. Run this command => dotnet ef migrations add InitialCreate
+
+
+
+
+
 Create AuthController:
 1. Create folder name Controllers and add AuthController.cs
 2. Add Register and Login methods in AuthController.cs
@@ -249,3 +262,40 @@ Create HealthCheck with packages.
 6. Inject HealthCheckService inside the program.cs
    Example: app.MapAllHealthChecks();
 
+
+
+
+
+Run api inside the docker container simple version:
+To Deploy api in Docker:
+1. Navigate to the root project folder
+2. Run following command to deploy inside the docker container
+	Example: dotnet publish -p:PublishProfile=DefaultContainer
+3. When you start container you have more option to change like:
+	PORT, CONTAINER_NAME, etc...
+
+Publish on docker hub:
+1. Duble click on you project tree. 
+2. Add following setting inside =>   <PropertyGroup>======HERE=====</PropertyGroup>
+Example:
+	<ContainerRegistry>docker.io</ContainerRegistry>
+	<ContainerRepository>[docker-profile]/[project-name]</ContainerRepository>
+	<ContainerImageTags>v1.0.0;latest</ContainerImageTags>
+3. Publish the container inside docker hub with following command:
+   Example: dotnet publish -p:PublishProfile=DefaultContainer
+
+
+
+Pull the docker image from dockerhub:
+1. Run following command to do so:
+Example: docker pull <docker-username>/<docker-image-name>:latest
+
+
+
+Add SQL Server as container into docker so, our app access the db as well:
+1. Create all neccessery files like dockerFile, dockerCompose file etc.. by.
+	Write click on solution explorer. 
+	Go to add option
+	Find the menu name => Container Orchestrator Support.. and click on it.
+	After that the specific files will be created, so that we can deploy every thing with docker-compose file.
+2. 

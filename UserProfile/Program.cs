@@ -1,4 +1,5 @@
 ﻿using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Http.HttpResults;
 using UserProfile.Config;
 using UserProfile.Middleware;
 using UserProfile.Startup;
@@ -12,6 +13,9 @@ builder.AddDependencies();
 
 // MIDLLEWARES ===========================================================================================>
 var app = builder.Build();
+
+// Getting the datbase ready
+app.MigrateDatabase();
 
 // Use open to send request easly
 app.UseOpenApi();
@@ -51,5 +55,11 @@ app.UseAuthorization();
 
 // 6️⃣ Map controllers
 app.MapControllers();
+
+// ENDPOINTS
+app.MapGet("/tester", () =>
+{
+    return Results.Ok("HELLOW WORLD.");
+});
 
 app.Run();
