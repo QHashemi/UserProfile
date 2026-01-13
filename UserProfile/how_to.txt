@@ -298,4 +298,23 @@ Add SQL Server as container into docker so, our app access the db as well:
 	Go to add option
 	Find the menu name => Container Orchestrator Support.. and click on it.
 	After that the specific files will be created, so that we can deploy every thing with docker-compose file.
-2. 
+
+Load Dotenv Files
+1. Install follwing package DotNetEnv
+2. Create .env files
+3. Add Configuration into program.cs to Load the files in the project
+4. We are adding .env.development, .env.production, .env.docker to the configuration list.
+
+
+HOWTO: Run ASP.NET Core API with PostgreSQL in Docker
+
+1. Create PostgreSQL container using official image (postgres:16).
+2. Create .env.docker file with all environment variables (DB host, port, name, user, password, connection string).
+3. Create Dockerfile for API (manually or via Visual Studio “Add Container Support”).
+4. Create docker-compose.yml with API and Postgres services; use env_file for API.
+5. Configure ASP.NET Core to load environment variables from .env.docker.
+6. Install EF Core tools and create migrations (InitialCreate).
+7. Apply migrations to database (Update-Database or db.Database.Migrate()).
+8. Remove old Docker volumes if needed (`docker-compose down -v`).
+9. Build and start containers (`docker-compose up --build`).
+10. Verify API is running and DB tables are created.

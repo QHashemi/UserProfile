@@ -1,9 +1,21 @@
 ﻿using AspNetCoreRateLimit;
-using Microsoft.AspNetCore.Http.HttpResults;
 using UserProfile.Config;
 using UserProfile.Middleware;
 using UserProfile.Startup;
+using DotNetEnv;
 
+// Load DotEnv files
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+var envFile = environment switch
+{
+    "Development" => ".env.development",
+    "Production" => ".env.production",
+    "Docker" => ".env.docker",
+    _ => ".env"
+};
+
+// Load environment variables early
+Env.Load(envFile);
 
 // SERVICES =========================================================================================>
 var builder = WebApplication.CreateBuilder(args);

@@ -9,14 +9,14 @@ namespace UserProfile.Config
         public static void AddAppDbContextConfig(this IServiceCollection services, IConfiguration configuration)
         {
          // Connect to postgreSQL ============================================================>
-            var DB_HOST = "localhost";
-            var DB_USER = "admin";
-            var DB_NAME = "userprofile";
-            var DB_PORT = 5432;
-            var DB_PASSWORD = "Admin4320!";
-            var connectionString =$"Host={DB_HOST};Port={DB_PORT};Database={DB_NAME};Username={DB_USER};Password={DB_PASSWORD};";
+            //var DB_HOST = "db";
+            //var DB_USER = "admin";
+            //var DB_NAME = "userprofile";
+            //var DB_PORT = 5432;
+            //var DB_PASSWORD = "Admin4320!";
+            //var connectionString =$"Host={DB_HOST};Port={DB_PORT};Database={DB_NAME};Username={DB_USER};Password={DB_PASSWORD};";
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql (connectionString, npgsqlOptions =>
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
                 {
                     npgsqlOptions.EnableRetryOnFailure(
                         maxRetryCount: 5,
@@ -34,17 +34,24 @@ namespace UserProfile.Config
         // Create table and migration
         public static void MigrateDatabase(this WebApplication app)
         {
-            using(var scope = app.Services.CreateScope())
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var pendingMigrations = db.Database.GetPendingMigrations();
+            if (pendingMigrations.Any())
             {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                // This triggers DB create and schema update
+                Console.WriteLine("Applying pending migrations...");
                 db.Database.Migrate();
-
+            }
+            else
+            {
+                Console.WriteLine("Database up to date, no migrations needed.");
             }
         }
+
+
     }
 
-    
+
 }
                          
