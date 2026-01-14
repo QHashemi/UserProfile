@@ -1,8 +1,4 @@
 ﻿
-
-using System.Threading.RateLimiting;
-using UserProfile.Utils;
-
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;

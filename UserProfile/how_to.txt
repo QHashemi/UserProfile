@@ -19,8 +19,15 @@ Setup postgesql
 	a. Remove all migration 
 	b. Run this command => dotnet ef migrations add InitialCreate
 
+6. Command install NET CLI for Postgress, so that we can update and create the migration:
+	dotnet tool install --global dotnet-ef
+    dotnet tool update --global dotnet-ef
 
+7: Command to use: 
+	dotnet ef migrations add AddUserProfile
+	dotnet ef database update
 
+	
 
 
 Create AuthController:
@@ -307,7 +314,6 @@ Load Dotenv Files
 
 
 HOWTO: Run ASP.NET Core API with PostgreSQL in Docker
-
 1. Create PostgreSQL container using official image (postgres:16).
 2. Create .env.docker file with all environment variables (DB host, port, name, user, password, connection string).
 3. Create Dockerfile for API (manually or via Visual Studio “Add Container Support”).
@@ -318,3 +324,141 @@ HOWTO: Run ASP.NET Core API with PostgreSQL in Docker
 8. Remove old Docker volumes if needed (`docker-compose down -v`).
 9. Build and start containers (`docker-compose up --build`).
 10. Verify API is running and DB tables are created.
+
+
+
+
+HOWTO: Create One-to-One Relationship in EF Core
+1. Create the main entity (User) with a navigation property to the related entity:
+   - Example: public UserDetails? UserDetails { get; set; }
+
+2. Create the related entity (UserDetails) with a foreign key and a navigation property back:
+   - Example: public Guid UserId { get; set; }
+              public User User { get; set; } = null!;
+
+3. Add DbSet properties for both entities in your DbContext:
+   - Example: public DbSet<User> Users { get; set; }
+              public DbSet<UserDetails> UserDetails { get; set; }
+
+4. Configure the one-to-one relationship using Fluent API in OnModelCreating:
+   - Example: 
+       modelBuilder.Entity<User>()
+           .HasOne(u => u.UserDetails)
+           .WithOne(d => d.User)
+           .HasForeignKey<UserDetails>(d => d.UserId);
+
+5. Install EF Core tools if not already installed:
+   - dotnet add package Microsoft.EntityFrameworkCore.Design
+   - dotnet tool install --global dotnet-ef
+
+6. Create a migration for the one-to-one relationship:
+   - dotnet ef migrations add AddUserDetails
+
+7. Apply the migration to the database:
+   - dotnet ef database update
+   - or in code: db.Database.Migrate();
+
+8. Verify:
+   - The database should have Users and UserDetails tables.
+   - UserDetails table should have a foreign key UserId referencing Users.Id.
+   - Each User can have at most one UserDetails, and each UserDetails belongs to exactly one User.
+
+
+
+HOWTO: Create Relationships in EF Core
+1️⃣ One-to-One Relationship
+1. Create the main entity with a navigation property to the related entity:
+   - Example: User has UserDetails: public UserDetails? UserDetails { get; set; }
+2. Create the related entity with a foreign key and navigation back:
+   - Example: public Guid UserId { get; set; } 
+              public User User { get; set; } = null!;
+3. Add DbSet for both entities in DbContext.
+4. Configure in OnModelCreating using Fluent API:
+   - modelBuilder.Entity<User>()
+       .HasOne(u => u.UserDetails)
+       .WithOne(d => d.User)
+       .HasForeignKey<UserDetails>(d => d.UserId);
+5. Create and apply migrations.
+
+---
+
+2️⃣ One-to-Many Relationship
+1. Create the main entity with a collection navigation property:
+   - Example: Blog has many Posts: public List<Post> Posts { get; set; } = new();
+2. Create the child entity with a foreign key and reference back:
+   - Example: public int BlogId { get; set; }
+              public Blog Blog { get; set; } = null!;
+3. Add DbSet for both entities in DbContext.
+4. Configure in OnModelCreating (optional, EF can infer by convention):
+   - modelBuilder.Entity<Blog>()
+       .HasMany(b => b.Posts)
+       .WithOne(p => p.Blog)
+       .HasForeignKey(p => p.BlogId);
+5. Create and apply migrations.
+
+---
+
+3️⃣ Many-to-Many Relationship
+1. Create the two entities with collection navigation properties:
+   - Example: Student has List<Course> Courses; Course has List<Student> Students
+2. EF Core 5+ automatically creates the join table.
+3. Add DbSet for both entities in DbContext (join table is optional to define explicitly).
+4. Configure in OnModelCreating (optional):
+   - modelBuilder.Entity<Student>()
+       .HasMany(s => s.Courses)
+       .WithMany(c => c.Students)
+       .UsingEntity(j => j.ToTable("StudentCourses")); // optional table name
+5. Create and apply migrations.
+
+---
+
+Tips:
+- Always include DbSet for main entities.
+- Use Fluent API for explicit control over foreign keys, table names, and cascading behavior.
+- EF conventions can infer most relationships if you name properties properly.
+- Apply migrations after defining relationships to ensure database schema matches the model.
+
+
+
+GET, DELETE, UPDATE
+1. Get user details from related table:
+   - Use Include() to load related data (one-to-one / one-to-many).
+   - Example:
+     context.Users.Include(u => u.UserDetails)
+
+2. Get all users:
+   - Query Users table.
+   - Include related tables if needed.
+   - Return list of users as DTOs.
+   - Example:
+     context.Users.Include(u => u.UserDetails).ToListAsync()
+
+3. Get user by Id:
+   - Filter by primary key.
+   - Include related tables.
+   - Return 404 if not found.
+   - Example:
+     context.Users.Include(u => u.UserDetails)
+                  .FirstOrDefaultAsync(u => u.Id == id)
+
+4. Update user (PUT / PATCH):
+   - Find user by Id.
+   - Return 404 if not found.
+   - Update only allowed fields (never password/hash directly).
+   - If related entity exists, update it.
+   - If related entity does not exist, create it.
+   - Save changes with SaveChangesAsync().
+
+5. Delete user:
+   - Find user by Id.
+   - Return 404 if not found.
+   - Remove related entities first (if cascade delete is not configured).
+   - Remove user.
+   - Save changes with SaveChangesAsync().
+
+6. General rules:
+   - Always use DTOs for input and output.
+   - Never return EF entities directly.
+   - Always check for null before accessing related data.
+   - Use Include() when navigation properties are required.
+   - Use async/await for all database operations.
