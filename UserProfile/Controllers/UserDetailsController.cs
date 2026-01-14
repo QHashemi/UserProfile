@@ -1,7 +1,10 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
+using UserProfile.Entities;
 using UserProfile.Services.UserServices;
 
 
@@ -9,14 +12,14 @@ namespace UserProfile.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserDetailsController(IUserService userService) : ControllerBase
+    public class UserDetailsController(IUserService userService, AppDbContext context) : ControllerBase
     {
 
         // Get all users
         [HttpGet("users")]
         public async Task<ActionResult<List<UserDetailsResponseDto>>> GetAllUsers()
         {
-            var users = userService.UsersAsync();
+            var users = await userService.UsersAsync();
             return Ok(users);
         }
 
@@ -24,14 +27,14 @@ namespace UserProfile.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDetailsResponseDto>> GetUserById(Guid id)
         {
-            var user = userService.UserAsync(id);
+            var user = await userService.UserAsync(id);
             return Ok(user);
         }
 
 
         // Update user 
         [HttpPatch("{id}")]
-        public async Task<ActionResult<UpdateUserResponseDto>> UpdateUser(Guid id, UpdateUserRequestDto request)
+        public async Task<ActionResult<UserDetailsResponseDto>> UpdateUser(Guid id, UpdateUserRequestDto request)
         {
             var updateUser = await userService.UpdateUserAsync(id, request);
             if (updateUser == null) 
@@ -39,6 +42,17 @@ namespace UserProfile.Controllers
                 throw new KeyNotFoundException("The User not Found!");
             }
             return updateUser;
+        }
+
+
+        // Update user Profile Profile image
+        [HttpPost("profile/{id}")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<UpdateUserProfileResponseDto>> UpdateUserProfile([FromForm] UpdateUserProfileRequestDto request, Guid id){
+
+            var filePath = await userService.UpdateUserProfileAsync(request, id);
+
+            return Ok(filePath);
         }
 
 
@@ -53,6 +67,8 @@ namespace UserProfile.Controllers
             }
             return NoContent();
         }
+
+
 
 
     }

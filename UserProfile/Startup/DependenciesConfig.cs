@@ -1,5 +1,6 @@
 ﻿using UserProfile.Config;
 using UserProfile.Services.AuthService;
+using UserProfile.Services.UserServices;
 using UserProfile.Utils.Interfaces;
 
 namespace UserProfile.Startup
@@ -33,8 +34,9 @@ namespace UserProfile.Startup
             // Secure end point configuration with jwt
             builder.Services.AddAuthenticationJwt(builder.Configuration);
 
-            // Register Controllers so that i can use _env, database configuration inside class
+            // Register application services for dependency injection
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserService, UserService>();
 
             // Register custom logger so that i can use _env files inside the CustomLogger Class
             builder.Services.AddSingleton<ICustomLogger, CustomLogger>();

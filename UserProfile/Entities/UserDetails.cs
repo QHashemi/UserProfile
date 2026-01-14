@@ -8,6 +8,7 @@
         public string? PhoneNumber { get; set; } 
         public string? MobileNumber { get; set; } 
         public DateTime? DateOfBirth { get; set; }
+        public string? ProfileImage { get; set; }
 
         // Navigation property
         public User User { get; set; } = null!;

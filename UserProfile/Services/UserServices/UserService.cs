@@ -1,5 +1,7 @@
 ﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
@@ -21,26 +23,16 @@ namespace UserProfile.Services.UserServices
 
 
         // Get all Users
-        public async Task<List<UserDetailsResponseDto>> UsersAsync()
+        public async Task<List<UserDetailsResponseDto>?> UsersAsync()
         {
             var users = await _context.Users.Include(detail => detail.UserDetails).ToListAsync();
 
-            var response = users.Select(u => new UserDetailsResponseDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email,
-                Role = u.Role,
-                Address = u.UserDetails?.Address ?? "",
-                PhoneNumber = u.UserDetails?.PhoneNumber ?? "",
-                MobileNumber = u.UserDetails?.MobileNumber ?? "",
-                DateOfBirth = u.UserDetails?.DateOfBirth ?? DateTime.MinValue
-            }).ToList();
-
+            var response = users.Select(u => ReturnUserResponse(u)).ToList();
             return response;
         }
 
+
+        // get single user
         public async Task<UserDetailsResponseDto?> UserAsync(Guid id)
         {
             var user = await _context.Users.Include(user => user.UserDetails).FirstOrDefaultAsync(user => user.Id == id);
@@ -50,24 +42,13 @@ namespace UserProfile.Services.UserServices
                 await _logger.Warning(message: $"The User with Id :{id} is not found", logEvent: "GET-SINGLE-USER", statusCode: 404);
                 throw new KeyNotFoundException("The user is not found");
             }
-            var response = new UserDetailsResponseDto
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                Role = user.Role,
-                Address = user.UserDetails?.Address ?? "",
-                PhoneNumber = user.UserDetails?.PhoneNumber ?? "",
-                MobileNumber = user.UserDetails?.MobileNumber ?? "",
-                DateOfBirth = user.UserDetails?.DateOfBirth ?? DateTime.MinValue,
-            };
+            var response = ReturnUserResponse(user);
             return response;
         }
 
 
         // Update user by id
-        public async Task<UpdateUserResponseDto?> UpdateUserAsync(Guid id,UpdateUserRequestDto request)
+        public async Task<UserDetailsResponseDto?> UpdateUserAsync(Guid id,UpdateUserRequestDto request)
         {
             var userToEdit = await _context.Users
                 .Include(u => u.UserDetails)
@@ -93,6 +74,7 @@ namespace UserProfile.Services.UserServices
                 };
             }
 
+
             // Update UserDetails
             userToEdit.UserDetails.Address =
                 request.Address ?? userToEdit.UserDetails.Address;
@@ -109,20 +91,68 @@ namespace UserProfile.Services.UserServices
             await _context.SaveChangesAsync();
 
             // Return response
-            return new UpdateUserResponseDto
+            return ReturnUserResponse(userToEdit);
+        }
+
+
+
+        public async Task<UpdateUserProfileResponseDto?> UpdateUserProfileAsync(UpdateUserProfileRequestDto request, Guid id)
+        {
+            // Fetch user including UserDetails
+            var user = await _context.Users.Include(u => u.UserDetails).FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
             {
-                Id = userToEdit.Id,
-                FirstName = userToEdit.FirstName,
-                LastName = userToEdit.LastName,
-                Email = userToEdit.Email,
-                Role = userToEdit.Role,
-                Address = userToEdit.UserDetails.Address,
-                PhoneNumber = userToEdit.UserDetails.PhoneNumber,
-                MobileNumber = userToEdit.UserDetails.MobileNumber,
-                DateOfBirth = userToEdit.UserDetails.DateOfBirth
+                await _logger.Warning( message: $"User with Id {id} not found",logEvent: "UPDATE-PROFILE",statusCode: 404);
+                // Use ArgumentException or custom NotFoundException
+                throw new KeyNotFoundException("The user is not found");
+            }
+
+            // Validate file
+            if (request.UserProfileImg == null || request.UserProfileImg.Length == 0)
+            {
+                throw new ArgumentException("Profile image file is required", nameof(request.UserProfileImg));
+            }
+
+            // Ensure Uploads/Profiles directory exists
+            var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Profiles");
+            if (!Directory.Exists(uploadDir))
+                Directory.CreateDirectory(uploadDir);
+
+            // Generate a safe, unique file name
+            var fileName = $"{user.FirstName.ToLower()}-{user.LastName.ToLower()}{Path.GetExtension(request.UserProfileImg.FileName)}";
+            var filePath = Path.Combine(uploadDir, fileName);
+
+            // Save file to disk
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await request.UserProfileImg.CopyToAsync(stream);
+            }
+
+            // Ensure UserDetails exists
+            if (user.UserDetails == null)
+            {
+                user.UserDetails = new UserDetails
+                {
+                    UserId = user.Id
+                };
+            }
+
+            // Update ProfileImage with relative path (frontend-friendly)
+            user.UserDetails.ProfileImage = Path.Combine("Uploads", "Profiles", fileName).Replace("\\", "/");
+
+            // Save changes
+            await _context.SaveChangesAsync();
+
+            // Return DTO with relative path
+            return new UpdateUserProfileResponseDto
+            {
+                UserProfileImg = user.UserDetails.ProfileImage
             };
         }
 
+
+        // delete User
         public async Task<bool> DeleteUserAsync(Guid id)
         {
             var userToDelete = await _context.Users
@@ -139,6 +169,21 @@ namespace UserProfile.Services.UserServices
             return true;
         }
 
+        private static UserDetailsResponseDto ReturnUserResponse(User user)
+        {
+            return new UserDetailsResponseDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Role = user.Role,
+                Address = user.UserDetails?.Address ?? "",
+                PhoneNumber = user.UserDetails?.PhoneNumber ?? "",
+                MobileNumber = user.UserDetails?.MobileNumber ?? "",
+                DateOfBirth = user.UserDetails?.DateOfBirth
+            };
+        }
         
     }
 }
