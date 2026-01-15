@@ -1,10 +1,8 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
-using UserProfile.Entities;
 using UserProfile.Services.UserServices;
 
 
@@ -12,10 +10,11 @@ namespace UserProfile.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserDetailsController(IUserService userService, AppDbContext context) : ControllerBase
+    public class UserDetailController(IUserService userService) : ControllerBase
     {
 
         // Get all users
+        [Authorize(Roles = "admin")]
         [HttpGet("users")]
         public async Task<ActionResult<List<UserDetailsResponseDto>>> GetAllUsers()
         {
@@ -24,6 +23,7 @@ namespace UserProfile.Controllers
         }
 
         // get User by id
+        [Authorize(Roles = "admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDetailsResponseDto>> GetUserById(Guid id)
         {
@@ -33,6 +33,7 @@ namespace UserProfile.Controllers
 
 
         // Update user 
+        [Authorize(Roles = "admin")]
         [HttpPatch("{id}")]
         public async Task<ActionResult<UserDetailsResponseDto>> UpdateUser(Guid id, UpdateUserRequestDto request)
         {
@@ -45,7 +46,8 @@ namespace UserProfile.Controllers
         }
 
 
-        // Update user Profile Profile image
+        // Update user Profile image
+        [Authorize(Roles = "user")]
         [HttpPost("profile/{id}")]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<UpdateUserProfileResponseDto>> UpdateUserProfile([FromForm] UpdateUserProfileRequestDto request, Guid id){
@@ -57,6 +59,7 @@ namespace UserProfile.Controllers
 
 
         // Delete User by Id
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserById(Guid id)
         {
@@ -67,9 +70,6 @@ namespace UserProfile.Controllers
             }
             return NoContent();
         }
-
-
-
 
     }
 }

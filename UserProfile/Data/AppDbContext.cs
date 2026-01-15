@@ -3,30 +3,34 @@ using UserProfile.Entities;
 
 namespace UserProfile.Data
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    public class AppDbContext : DbContext
     {
-        // Here we define the Users DbSet to represent the Users table in the database
-        // User Entity table
-        // DbSets
-        public DbSet<User> Users { get; set; } = null!;
-        public DbSet<UserDetails> UserDetails { get; set; } = null!;
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
 
-        // Optional: configure one-to-one relationship
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Post> Posts => Set<Post>();
+        public DbSet<UserDetail> UserDetails => Set<UserDetail>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // One-to-one: User -> UserDetail
             modelBuilder.Entity<User>()
-                // Configure one-to-one relationship between User and UserDetails
                 .HasOne(u => u.UserDetails)
                 .WithOne(d => d.User)
+                .HasForeignKey<UserDetail>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-                // Specify UserDetails.UserId as the foreign key
-                .HasForeignKey<UserDetails>(d => d.UserId)
-
-                // Automatically delete UserDetails when the related User is deleted
+            // One-to-many: User -> Post
+            modelBuilder.Entity<Post>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.Posts)
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }
-
     }
 }

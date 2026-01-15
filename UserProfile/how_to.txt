@@ -1,33 +1,40 @@
-﻿Setup database using Entity Framework Core:
+﻿
+Setup database using Entity Framework Core:
+
 1. Create folder name Entities and add User.cs entity
 2. Create folder name Data and add DbContext.cs
-3. Create Db in sql server management studio
-4. Connect db with visual studio and copy the connection string
+3. Create Db in SQL Server Management Studio
+4. Connect db with Visual Studio and copy the connection string
 5. Add connection string in appsettings.json
 6. Add DbContext in Program.cs
 7. Run the migration commands in Package Manager Console
-   - Add-Migration InitialCreate
-   - Update-Database
+
+   * Add-Migration InitialCreate -Context UserProfile.Data.AppDbContext
+   * Update-Database -Context UserProfile.Data.AppDbContext
+   * Optional: see the SQL being executed
+
+     * Update-Database -Context UserProfile.Data.AppDbContext -Verbose
 
 
-Setup postgesql
+Setup PostgreSQL:
 1. Install package name: Npgsql.EntityFrameworkCore.PostgreSQL
-2. Add Database connection configuration:
-3. Create Method name AddAppDbContext => for connection string etc..
+2. Add Database connection configuration in appsettings.json
+3. Create Method name AddAppDbContext => for connection string etc.
 4. Create Method name MigrateDatabase => to migrate the db on startup
-5. If the database creation not work. 
-	a. Remove all migration 
-	b. Run this command => dotnet ef migrations add InitialCreate
+5. If the database creation does not work
+   a. Remove all migrations
+   b. Run this command => dotnet ef migrations add InitialCreate
+6. Run the migration commands in Package Manager Console
 
-6. Command install NET CLI for Postgress, so that we can update and create the migration:
-	dotnet tool install --global dotnet-ef
-    dotnet tool update --global dotnet-ef
+   * Add-Migration InitialCreate -Context UserProfile.Data.AppDbContext
+   * Update-Database -Context UserProfile.Data.AppDbContext
+   * Optional: see the SQL being executed
 
-7: Command to use: 
-	dotnet ef migrations add AddUserProfile
-	dotnet ef database update
+     * Update-Database -Context UserProfile.Data.AppDbContext -Verbose
+
 
 	
+
 
 
 Create AuthController:
@@ -464,3 +471,48 @@ GET, DELETE, UPDATE
    - Use async/await for all database operations.
 
 
+7. Update user profile image:
+   - Find user by Id.
+     - Example:
+       context.Users.Include(u => u.UserDetails)
+                    .FirstOrDefaultAsync(u => u.Id == id)
+   - Return 404 if not found.
+     - Example:
+       if (user == null) throw new KeyNotFoundException("The user is not found");
+   - Validate uploaded file and return 400 if missing.
+     - Example:
+       if (request.UserProfileImg == null || request.UserProfileImg.Length == 0)
+           throw new ArgumentException("File is required");
+   - Ensure uploads directory "Uploads/Profiles" exists.
+     - Example:
+       var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Profiles");
+       if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+   - Generate a unique file name for the uploaded image.
+     - Example:
+       var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.UserProfileImg.FileName)}";
+   - Save the file to disk using FileStream.
+     - Example:
+       var filePath = Path.Combine(uploadDir, fileName);
+       using (var stream = new FileStream(filePath, FileMode.Create))
+       {
+           await request.UserProfileImg.CopyToAsync(stream);
+       }
+   - Ensure UserDetails exists; create if null and set UserId.
+     - Example:
+       if (user.UserDetails == null)
+       {
+           user.UserDetails = new UserDetails { UserId = user.Id };
+       }
+   - Update ProfileImage property with relative path.
+     - Example:
+       user.UserDetails.ProfileImage = Path.Combine("Uploads", "Profiles", fileName).Replace("\\", "/");
+   - Optionally delete old profile image from disk if it exists.
+     - Example:
+       if (!string.IsNullOrEmpty(oldImagePath) && File.Exists(oldImagePath))
+           File.Delete(oldImagePath);
+   - Save changes to the database with SaveChangesAsync().
+     - Example:
+       await _context.SaveChangesAsync();
+   - Return DTO containing the relative path or URL of the new profile image.
+     - Example:
+       return new UpdateUserProfileResponseDto { UserProfileImg = user.UserDetails.ProfileImage };

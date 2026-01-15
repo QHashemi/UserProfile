@@ -111,6 +111,7 @@ namespace UserProfile.Services.AuthService
             // Create a unique key per IP + email to track login attempts
             var attemptKey = $"{clientIp}:{request.Email?.ToLowerInvariant() ?? "unknown"}";
 
+
             // Block login if too many failed attempts occurred
             if (LoginAttemptTracker.IsBlocked(attemptKey))
             {
@@ -118,6 +119,7 @@ namespace UserProfile.Services.AuthService
                 await _logger.Warning(message: "Login blocked due to too many failed attempts",logEvent: "AUTH_LOGIN_BLOCKED");
                 throw new UnauthorizedAccessException("Too many login attempts. Try again later.");
             }
+
 
             // Try to find user by email
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -149,6 +151,7 @@ namespace UserProfile.Services.AuthService
 
             // Login succeeded → reset failed attempt counter
             LoginAttemptTracker.Reset(attemptKey);
+
 
             var accessToken = GenerateJwtAccessToken(user);
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
@@ -231,7 +234,7 @@ namespace UserProfile.Services.AuthService
         // Generate Refresh Token
         private string GenerateRefreshToken()
         {
-            var randomBytes = new byte[64];
+            var randomBytes = new byte[512];
             using var range = RandomNumberGenerator.Create();
             range.GetBytes(randomBytes);
             var refreshToken = Convert.ToBase64String(randomBytes);

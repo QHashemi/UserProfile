@@ -68,7 +68,7 @@ namespace UserProfile.Services.UserServices
             // Ensure UserDetails exists
             if (userToEdit.UserDetails == null)
             {
-                userToEdit.UserDetails = new UserDetails
+                userToEdit.UserDetails = new UserDetail
                 {
                     UserId = userToEdit.Id
                 };
@@ -132,7 +132,7 @@ namespace UserProfile.Services.UserServices
             // Ensure UserDetails exists
             if (user.UserDetails == null)
             {
-                user.UserDetails = new UserDetails
+                user.UserDetails = new UserDetail
                 {
                     UserId = user.Id
                 };
