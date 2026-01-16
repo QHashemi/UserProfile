@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using UserProfile.Data;
 using UserProfile.Dto.Response;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
 namespace UserProfile.Controllers
 {
@@ -12,7 +12,7 @@ namespace UserProfile.Controllers
 
     [ApiController]
     [Route("/api")]
-    public class ApiHealthController(AppDbContext context, ICustomLogger logger) : ControllerBase
+    public class ApiHealthController(AppDbContext context, ICustomLoggerService logger) : ControllerBase
     {
 
         /// <summary>

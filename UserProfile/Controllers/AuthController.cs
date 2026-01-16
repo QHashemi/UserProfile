@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Scalar.AspNetCore;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Services.AuthService;
@@ -39,7 +41,7 @@ namespace UserProfile.Controllers
             return Ok(serviceResult);
         }
 
-
+        // Token Refresher
         [HttpPost("refresh-token")]
         public async Task<ActionResult<LoginResponseDto>> RefreshToken(RefreshTokenRequestDto request)
         {
@@ -47,7 +49,34 @@ namespace UserProfile.Controllers
           
             return Ok(serviceResponse);
         }
+        
+        
+        // Reset Passwor Request
+        [HttpPost("password-reset-request")]
+        public async Task<ActionResult<PasswordResetResponseDto>> RequestResetPassword(PasswordResetRequestDto request)
+        {
+            var serviceResponse = await authService.RequestPasswordResetAsync(request);
+            if (serviceResponse is null)
+            {
+                return BadRequest("There is Problem with Reset-Email"); 
+            }
 
+            return Ok(serviceResponse);
+        }
+
+
+        // Reset Password
+        [HttpPost("password-reset")]
+        public async Task<ActionResult<PasswordResetResponseDto>> ResetPassword(PasswordResetRequestDto request)
+        {
+            var serviceResponse = await authService.ResetPasswordAsync(request);
+            if (serviceResponse is null)
+            {
+                return BadRequest("There is Problem with Reset-Email");   
+            }
+            return Ok(serviceResponse);
+        }
+      
 
 
         // ENDPOINT WITH ONLY JWT =======================================================================>

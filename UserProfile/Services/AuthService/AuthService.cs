@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,8 +11,9 @@ using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
+using UserProfile.Services.EmailService;
+using UserProfile.Services.LoggerService;
 using UserProfile.Utils;
-using UserProfile.Utils.Interfaces;
 
 
 namespace UserProfile.Services.AuthService
@@ -19,21 +21,27 @@ namespace UserProfile.Services.AuthService
     public class AuthService : IAuthService
     {
         private readonly AppDbContext context;
-        private readonly IConfiguration configuration;
-        private readonly ICustomLogger _logger;
+        private readonly AppSettings appSettings;
+        private readonly ICustomLoggerService _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IEmailService _emailService;
+  
 
 
         public AuthService(
             AppDbContext context,
-            IConfiguration configuration,
-            ICustomLogger logger,
-            IHttpContextAccessor httpContextAccessor)
+            ICustomLoggerService logger,
+            IHttpContextAccessor httpContextAccessor,
+            IEmailService emailService,
+            IOptions<AppSettings> appSettings
+            )
         {
             this.context = context;
-            this.configuration = configuration;
+            this.appSettings = appSettings.Value;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _emailService = emailService;
+           
         }
 
 
@@ -154,7 +162,7 @@ namespace UserProfile.Services.AuthService
 
 
             var accessToken = GenerateJwtAccessToken(user);
-            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user, 512);
             await _logger.Info(message: "Login succeeded",logEvent: "AUTH_LOGIN_SUCCEEDED", userIdentifier: user.Id.ToString());
 
             // Return authentication response
@@ -180,7 +188,7 @@ namespace UserProfile.Services.AuthService
                 throw new UnauthorizedAccessException("Invalid or expired refresh token.");
             }
             // generate and save new refresh token
-            var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+            var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(user, 512);
             var newAccessToken = GenerateJwtAccessToken(user);
 
 
@@ -193,9 +201,90 @@ namespace UserProfile.Services.AuthService
             };
 
         }
+        // Reset password
+        public async Task<PasswordResetResponseDto> RequestPasswordResetAsync(PasswordResetRequestDto request)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(user => user.Email == request.Email);
+
+            // Email not exits send back Not Found
+            if (user is null)
+            {
+                await _logger.Warning(message: "Email for password reset is not found", statusCode: 404, logEvent: "RESET-PASSWORD-FAILED");
+                throw new KeyNotFoundException($"The Email you have {user?.Email} is not working!");
+            }
+
+            // Genearte token with userDate
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var hashedToken = HashToken(token);
+
+            var expireTime = DateTime.UtcNow.AddMinutes(15);
+
+            // save into db
+            user.ResetPasswordToken = token;
+            user.ResetPasswordTokenExpiry = expireTime;
+
+            var resetLink = $"http://localhost:3000/reset-password?token={token}";
+
+
+            // Send Email to the user with LINK
+            await _emailService.SendEmailAsync(
+                user.Email,
+                "Reset your password",
+                $@"
+                <h3>Rest Passowrd</h3>
+                <p>Click the link below to reset your password:</p>
+                <p>LINK: <a href='{resetLink}'>Reset Password</a></p>
+                <p>This link will be expires in 15 Minutes.</p>"
+            );
+
+            // Set into DB
+            await context.SaveChangesAsync();
+
+            await _logger.Info(message: "Email has been send to the user for password reset", logEvent: "RESET-PASSWORD", userIdentifier: user.Id.ToString());
+            return new PasswordResetResponseDto
+            {
+                Message = $"The Email has been send to {user.Email}",
+                IsPasswordReset = true,
+            }; ;
+        }
+
+
+        // Reset Password 
+        public async Task<PasswordResetResponseDto> ResetPasswordAsync(PasswordResetRequestDto request)
+        {
+            // check if the link is not expired
+            var user = await context.Users.FirstOrDefaultAsync(user => user.ResetPasswordToken == request.token && user.ResetPasswordTokenExpiry > DateTime.UtcNow);
+            if (user is null)
+            {
+                await _logger.Warning(message: "The Link for Password Reset has been expired", statusCode: 408, logEvent: "RESET-PASSWORD-FAILED");
+                throw new TimeoutException("Reset link is invalid or expired.");
+            };
+
+            // reset password
+            // has password
+            var hashedPassword = new PasswordHasher<User>().HashPassword(user, request.NewPassword);
+
+            user.PasswordHash = hashedPassword;
+
+            await context.SaveChangesAsync();
+            await _logger.Info(message: "The Password has been reseted successfully.", logEvent: "RESET-PASSWORD-SUCCESS", userIdentifier: user.Id.ToString());
+
+            return new PasswordResetResponseDto
+            {
+                Message = "The Password has been reseted",
+                IsPasswordReset = true,
+            };
+        }
+
 
 
         // ACCESS TOKEN HANDLER =====================================================================>
+        private static string HashToken(string token)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+            return Convert.ToBase64String(bytes);
+        }
 
         // Generate JWT Access Token
         private string GenerateJwtAccessToken(User user)
@@ -211,15 +300,15 @@ namespace UserProfile.Services.AuthService
             };
 
             // create Key
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetAppSettings("Token")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Token));
 
             // create credentials
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             // create token
             var tokenDescriptor = new JwtSecurityToken(
-               issuer: GetAppSettings("Issuer"),
-               audience: GetAppSettings("Audience"),
+               issuer: appSettings.Issuer,
+               audience: appSettings.Audience,
                claims: claims,
                expires: DateTime.UtcNow.AddDays(1),
                signingCredentials: credentials
@@ -232,18 +321,18 @@ namespace UserProfile.Services.AuthService
    
         // Refresh Token Handler =================================================================>
         // Generate Refresh Token
-        private string GenerateRefreshToken()
+        private string GenerateRefreshToken(int bit)
         {
-            var randomBytes = new byte[512];
+            var randomBytes = new byte[bit];
             using var range = RandomNumberGenerator.Create();
             range.GetBytes(randomBytes);
             var refreshToken = Convert.ToBase64String(randomBytes);
             return refreshToken;
         }
         // Generate and Save Refresh Token
-        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user,int bit)
         {
-            var refreshToken = GenerateRefreshToken();
+            var refreshToken = GenerateRefreshToken(bit);
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await context.SaveChangesAsync();
@@ -267,13 +356,6 @@ namespace UserProfile.Services.AuthService
         }
 
 
-
-        // GENERAL FUNCTION ========================================================================>
-        private string GetAppSettings(string setting)
-        {
-            var appSettingsString = $"AppSettings:{setting}";
-            return configuration.GetValue<string>(appSettingsString)!;
-        }
 
 
     }

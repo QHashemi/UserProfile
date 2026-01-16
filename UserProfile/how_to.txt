@@ -516,3 +516,83 @@ GET, DELETE, UPDATE
    - Return DTO containing the relative path or URL of the new profile image.
      - Example:
        return new UpdateUserProfileResponseDto { UserProfileImg = user.UserDetails.ProfileImage };
+
+
+
+
+
+HOWTO: Implement Password Reset in ASP.NET Core
+
+1. Create endpoint for users to request password reset (POST with email).
+2. Check if user exists in database, but always return success to prevent email leaks.
+3. Generate a cryptographically secure random token.
+4. Hash the token and store it in the user record with an expiry time (e.g., 15 min).
+5. Construct frontend URL with token as query parameter.
+6. Send reset link via email using an email service.
+7. Frontend extracts token from URL and displays new password form.
+8. User submits new password along with the token to backend.
+9. Backend hashes the token, verifies it matches the stored hash and is not expired.
+10. If valid, hash the new password, update user record, remove token and expiry, and save changes.
+11. Return success response to frontend.
+
+┌────────────┐
+│   Client   │
+│ (Web/App)  │
+└─────┬──────┘
+      │
+      │ 1. POST /api/auth/request-password-reset
+      │    { email }
+      ▼
+┌──────────────────────┐
+│   Auth Controller    │
+│  (ASP.NET API)       │
+└─────┬────────────────┘
+      │
+      │ calls
+      ▼
+┌──────────────────────┐
+│  Auth/User Service   │
+│  (Business Logic)    │
+└─────┬────────────────┘
+      │
+      │ 2. Generate token + expiry
+      │ 3. Save token to DB
+      ▼
+┌──────────────────────┐
+│      Database        │
+│      (Users)         │
+│  ResetToken          │
+│  ResetTokenExpiry    │
+└─────┬────────────────┘
+      │
+      │ 4. Send reset link
+      ▼
+┌──────────────────────┐
+│   Email Service      │
+│ (SMTP / SendGrid)   │
+└─────┬────────────────┘
+      │ Use Email Package: dotnet add package MailKit
+      │ Email with link:
+      │ https://app/reset-password?token=XYZ
+      ▼
+┌────────────┐
+│   Client   │
+│ Reset Page │
+└─────┬──────┘
+      │
+      │ 5. POST /api/auth/reset-password
+      │    { token, newPassword }
+      ▼
+┌──────────────────────┐
+│   Auth Controller    │
+└─────┬────────────────┘
+      │
+      │ 6. Validate token
+      │ 7. Hash password
+      │ 8. Clear token
+      ▼
+┌──────────────────────┐
+│      Database        │
+│ PasswordHash updated │
+│ Token removed        │
+└──────────────────────┘

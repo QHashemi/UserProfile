@@ -4,7 +4,7 @@ using UserProfile.Controllers;
 using UserProfile.Data;
 using UserProfile.Dto.Response;
 using Moq;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
 namespace UserProfile.Test.Controllers
 {
@@ -14,9 +14,9 @@ namespace UserProfile.Test.Controllers
 
 
         // Create fake custom Logger With Moq
-        private static ICustomLogger CreateFakeLogger()
+        private static ICustomLoggerService CreateFakeLogger()
         {
-            return Mock.Of<ICustomLogger>();
+            return Mock.Of<ICustomLoggerService>();
         }
 
         [Fact]

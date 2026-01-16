@@ -1,14 +1,14 @@
 ﻿using System.Security.Claims;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
 namespace UserProfile.Middleware
 {
     public class SecureHeaderMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ICustomLogger _logger;
+        private readonly ICustomLoggerService _logger;
 
-        public SecureHeaderMiddleware(RequestDelegate next, ICustomLogger logger)
+        public SecureHeaderMiddleware(RequestDelegate next, ICustomLoggerService logger)
         {
             _next = next;
             _logger = logger;

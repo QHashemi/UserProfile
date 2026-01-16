@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Security.Claims;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
 public sealed class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ICustomLogger _logger;
+    private readonly ICustomLoggerService _logger;
 
-    public RequestLoggingMiddleware(RequestDelegate next,ICustomLogger logger)
+    public RequestLoggingMiddleware(RequestDelegate next,ICustomLoggerService logger)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

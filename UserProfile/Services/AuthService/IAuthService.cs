@@ -12,5 +12,9 @@ namespace UserProfile.Services.AuthService
         Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
 
         Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
+
+        Task<PasswordResetResponseDto> RequestPasswordResetAsync(PasswordResetRequestDto request);
+
+        Task<PasswordResetResponseDto> ResetPasswordAsync(PasswordResetRequestDto request);
     }
 }

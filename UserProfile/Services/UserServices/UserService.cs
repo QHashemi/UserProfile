@@ -6,16 +6,16 @@ using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Entities;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
 namespace UserProfile.Services.UserServices
 {
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
-        private readonly ICustomLogger _logger;
+        private readonly ICustomLoggerService _logger;
 
-         public UserService(AppDbContext context, ICustomLogger logger)
+         public UserService(AppDbContext context, ICustomLoggerService logger)
         {
             this._context = context;
             _logger = logger;

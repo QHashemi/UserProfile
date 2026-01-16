@@ -14,8 +14,14 @@
         public string? RefreshToken { get; set; } = null;
         public DateTime? RefreshTokenExpiryTime { get; set; } = null;
 
+        public string? ResetPasswordToken { get; set; } 
+        public DateTime? ResetPasswordTokenExpiry { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+
+
+        // Relationship =========================================>
 
         // one-to-one Relation with UserDetails
         public UserDetail? UserDetails { get; set; }

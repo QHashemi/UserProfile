@@ -1,7 +1,9 @@
 ﻿using UserProfile.Config;
+using UserProfile.Services;
 using UserProfile.Services.AuthService;
+using UserProfile.Services.EmailService;
+using UserProfile.Services.LoggerService;
 using UserProfile.Services.UserServices;
-using UserProfile.Utils.Interfaces;
 
 namespace UserProfile.Startup
 {
@@ -34,12 +36,19 @@ namespace UserProfile.Startup
             // Secure end point configuration with jwt
             builder.Services.AddAuthenticationJwt(builder.Configuration);
 
+            // Inject appsettings.json to the service, so that the service can use the settings from appsettings.json
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
+
             // Register application services for dependency injection
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
+          
 
             // Register custom logger so that i can use _env files inside the CustomLogger Class
-            builder.Services.AddSingleton<ICustomLogger, CustomLogger>();
+            builder.Services.AddSingleton<ICustomLoggerService, CustomLoggerService>();
 
         }
     }

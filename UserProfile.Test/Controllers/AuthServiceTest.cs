@@ -9,7 +9,8 @@ using UserProfile.Data;
 using UserProfile.Dto.Request;
 using UserProfile.Dto.Response;
 using UserProfile.Services.AuthService;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.EmailService;
+using UserProfile.Services.LoggerService;
 
 namespace UserProfile.Tests.Controllers
 {
@@ -25,9 +26,9 @@ namespace UserProfile.Tests.Controllers
             return new AppDbContext(options);
         }
 
-        private static ICustomLogger CreateFakeLogger()
+        private static ICustomLoggerService CreateFakeLogger()
         {
-            return Mock.Of<ICustomLogger>();
+            return Mock.Of<ICustomLoggerService>();
         }
 
         private static IConfiguration CreateFakeConfiguration()
@@ -43,15 +44,23 @@ namespace UserProfile.Tests.Controllers
             };
         }
 
+        private static IEmailService CreateFakeEmailService()
+        {
+            return Mock.Of<IEmailService>();
+        }
+
+
         private IAuthService CreateAuthService()
         {
             return new AuthService(
                 CreateDbContext(),
                 CreateFakeConfiguration(),
                 CreateFakeLogger(),
-                CreateFakeHttpContext()
+                CreateFakeHttpContext(),
+                CreateFakeEmailService()   
             );
         }
+
 
 
 

@@ -1,14 +1,14 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using UserProfile.Dto.Response;
-using UserProfile.Utils.Interfaces;
+using UserProfile.Services.LoggerService;
 
-public class CustomLogger : ICustomLogger
+public class CustomLoggerService : ICustomLoggerService
 
 {
     private readonly IWebHostEnvironment _env;
 
-    public CustomLogger(IWebHostEnvironment env)
+    public CustomLoggerService(IWebHostEnvironment env)
     {
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }

@@ -1,8 +1,6 @@
-﻿
-
-namespace UserProfile.Utils.Interfaces
+﻿namespace UserProfile.Services.LoggerService
 {
-    public interface ICustomLogger
+    public interface ICustomLoggerService
     {
         public Task Trace(string message = "", string userIdentifier = "" , string logEvent = "", int statusCode=0);
         public Task Debug(string message = "", string userIdentifier = "" , string logEvent = "", int statusCode = 0);
